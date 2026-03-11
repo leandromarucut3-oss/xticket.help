@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>Chat Admin</title>
+  @vite(['resources/css/app.css', 'resources/js/admin.js'])
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f5f7;
+      color: #1c1c1c;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 16px 24px;
+      background: #111111;
+      color: #ffffff;
+      font-size: 18px;
+    }
+    .layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 0;
+    }
+    .sidebar {
+      background: #ffffff;
+      border-right: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar h2 {
+      margin: 0;
+      padding: 16px 20px 8px;
+      font-size: 14px;
+      text-transform: uppercase;
+      color: #666666;
+    }
+    .conversation-list {
+      list-style: none;
+      margin: 0;
+      padding: 0 8px 16px;
+      overflow-y: auto;
+    }
+    .conversation-list li {
+      padding: 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .conversation-list li.active {
+      background: #111111;
+      color: #ffffff;
+    }
+    .conversation-list li .status {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #f0f0f0;
+      color: #444444;
+    }
+    .conversation-list li .status--online {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .conversation-list li .status--idle {
+      background: #f0f0f0;
+      color: #444444;
+    }
+    .conversation-list li.active .status {
+      background: #ffffff;
+      color: #111111;
+    }
+    .chat-panel {
+      display: flex;
+      flex-direction: column;
+      background: #f4f5f7;
+    }
+    .chat-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #e0e0e0;
+      background: #ffffff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .chat-header__meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      color: #666666;
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .chat-message {
+      max-width: 70%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #ffffff;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+      font-size: 14px;
+    }
+    .chat-message img,
+    .chat-message video {
+      max-width: 100%;
+      border-radius: 10px;
+      display: block;
+    }
+    .chat-message.user {
+      align-self: flex-start;
+    }
+    .chat-message.admin {
+      align-self: flex-end;
+      background: #dbeafe;
+    }
+    .chat-typing {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      max-width: 70%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #ffffff;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+      font-size: 12px;
+      color: #666666;
+    }
+    .typing-dots {
+      display: inline-flex;
+      gap: 4px;
+    }
+    .typing-dots span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #777777;
+      display: inline-block;
+      animation: admin-typing 1.2s infinite ease-in-out;
+    }
+    .typing-dots span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    .typing-dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+    @keyframes admin-typing {
+      0%,
+      80%,
+      100% {
+        transform: translateY(0);
+        opacity: 0.4;
+      }
+      40% {
+        transform: translateY(-4px);
+        opacity: 1;
+      }
+    }
+    .chat-input {
+      padding: 16px 20px;
+      border-top: 1px solid #e0e0e0;
+      background: #ffffff;
+      display: flex;
+      gap: 10px;
+    }
+    .chat-input input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #d0d0d0;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+    .chat-input button {
+      padding: 10px 14px;
+      border: 0;
+      border-radius: 10px;
+      background: #111111;
+      color: #ffffff;
+      cursor: pointer;
+    }
+    .chat-attach {
+      background: #ffffff;
+      color: #111111;
+      border: 1px solid #d0d0d0;
+      width: 40px;
+      height: 40px;
+      font-size: 18px;
+      line-height: 1;
+    }
+    .empty-state {
+      padding: 32px;
+      color: #666666;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>Support Chat Admin</header>
+  <div class="layout">
+    <aside class="sidebar">
+      <h2>Conversations</h2>
+      <ul class="conversation-list" id="conversation-list"></ul>
+    </aside>
+    <section class="chat-panel">
+      <div class="chat-header">
+        <h3 id="chat-title">Select a conversation</h3>
+        <div class="chat-header__meta">
+          <span id="chat-status"></span>
+        </div>
+      </div>
+      <div class="chat-messages" id="chat-messages">
+        <div class="empty-state" id="empty-state">No conversation selected.</div>
+        <div class="chat-typing" id="chat-typing" aria-hidden="true">User is typing
+          <span class="typing-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </div>
+      </div>
+      <form class="chat-input" id="chat-form">
+        <button class="chat-attach" type="button" id="chat-attach" aria-label="Attach file">+</button>
+        <input id="chat-text" type="text" placeholder="Type a reply..." autocomplete="off" disabled>
+        <button type="submit" disabled>Send</button>
+        <input id="chat-file" type="file" accept="image/*,video/*" style="display:none">
+      </form>
+    </section>
+  </div>
+</body>
+</html>

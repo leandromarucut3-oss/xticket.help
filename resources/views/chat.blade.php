@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>Support Chat</title>
+  @vite(['resources/css/app.css', 'resources/js/chat.js'])
+  <style>
+    html, body {
+      height: 100%;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #ffffff;
+      color: #1c1c1c;
+      display: flex;
+    }
+    .chat-shell {
+      max-width: none;
+      margin: 0;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 0;
+      box-shadow: none;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 100%;
+    }
+    .chat-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid #e6e6e6;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 16px 18px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .chat-message {
+      max-width: 80%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      background: #f2f2f2;
+      word-break: break-word;
+    }
+    .chat-message.user {
+      align-self: flex-end;
+      background: #dbeafe;
+    }
+    .chat-message img,
+    .chat-message video {
+      max-width: 100%;
+      border-radius: 10px;
+      display: block;
+    }
+    .chat-typing {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      background: #f2f2f2;
+      font-size: 12px;
+      color: #666666;
+      width: fit-content;
+    }
+    .typing-dots {
+      display: inline-flex;
+      gap: 4px;
+    }
+    .typing-dots span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #777777;
+      display: inline-block;
+      animation: chat-typing 1.2s infinite ease-in-out;
+    }
+    .typing-dots span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    .typing-dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+    @keyframes chat-typing {
+      0%,
+      80%,
+      100% {
+        transform: translateY(0);
+        opacity: 0.4;
+      }
+      40% {
+        transform: translateY(-4px);
+        opacity: 1;
+      }
+    }
+    .chat-input {
+      padding: 12px 16px;
+      border-top: 1px solid #e6e6e6;
+      display: flex;
+      gap: 10px;
+    }
+    .chat-input button,
+    .chat-input input {
+      border-radius: 10px;
+      border: 1px solid #d0d0d0;
+    }
+    .chat-input input {
+      flex: 1;
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+    .chat-input button {
+      padding: 10px 14px;
+      background: #111111;
+      color: #ffffff;
+      cursor: pointer;
+      border: 0;
+    }
+    .chat-attach {
+      background: #ffffff;
+      color: #111111;
+      border: 1px solid #d0d0d0;
+      width: 40px;
+      height: 40px;
+      font-size: 18px;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-shell" data-chat-root>
+    <div class="chat-header">Chat with Support</div>
+    <div class="chat-messages" id="chat-messages">
+      <div class="chat-message">Please wait while we connect you to an agent.</div>
+      <div class="chat-typing" id="chat-typing" aria-hidden="true">Agent is typing
+        <span class="typing-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+      </div>
+    </div>
+    <form class="chat-input" id="chat-form">
+      <button class="chat-attach" type="button" id="chat-attach" aria-label="Attach file">+</button>
+      <input id="chat-text" type="text" placeholder="Type your message..." autocomplete="off">
+      <button type="submit">Send</button>
+      <input id="chat-file" type="file" accept="image/*,video/*" style="display:none">
+    </form>
+  </div>
+</body>
+</html>
