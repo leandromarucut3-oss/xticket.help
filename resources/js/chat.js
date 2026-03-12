@@ -107,24 +107,25 @@ function setupEventListeners() {
   });
 }
 
-const pusherKey = import.meta.env?.VITE_PUSHER_APP_KEY || '';
-const pusherHost = import.meta.env?.VITE_PUSHER_HOST || window.location.hostname;
-const pusherPort = Number(import.meta.env?.VITE_PUSHER_PORT || 6001);
-const pusherScheme = import.meta.env?.VITE_PUSHER_SCHEME || 'http';
-const pusherCluster = import.meta.env?.VITE_PUSHER_APP_CLUSTER || 'mt1';
+const pusherKey = import.meta.env?.VITE_REVERB_APP_KEY || '';
 
 let echo = null;
-if (pusherKey) {
+// Use global Echo instance from bootstrap.js if available
+if (window.Echo) {
+  echo = window.Echo;
+} else if (pusherKey) {
+  // Fallback: create Echo instance if not available globally
   try {
+    const Echo = await import('laravel-echo');
+    const Pusher = await import('pusher-js');
+    window.Pusher = Pusher;
     echo = new Echo({
-      broadcaster: 'pusher',
-      key: pusherKey,
-      wsHost: pusherHost,
-      wsPort: pusherPort,
-      wssPort: pusherPort,
-      forceTLS: pusherScheme === 'https',
-      cluster: pusherCluster,
-      disableStats: true,
+      broadcaster: 'reverb',
+      key: import.meta.env?.VITE_REVERB_APP_KEY,
+      wsHost: import.meta.env?.VITE_REVERB_HOST || window.location.hostname,
+      wsPort: Number(import.meta.env?.VITE_REVERB_PORT) || 6001,
+      wssPort: Number(import.meta.env?.VITE_REVERB_PORT) || 443,
+      forceTLS: (import.meta.env?.VITE_REVERB_SCHEME || 'https') === 'https',
       enabledTransports: ['ws', 'wss'],
     });
   } catch (error) {
@@ -255,8 +256,9 @@ function registerChannel() {
   if (!conversationId || !echo) {
     return;
   }
-  echo.channel(`chat.${conversationId}`)
-    .listen('.message.sent', (event) => {
+  echo
+    .private(`conversation.${conversationId}`)
+    .listen('message.sent', (event) => {
       if (event.senderRole === 'admin') {
         appendMessage({
           messageType: event.messageType,
@@ -268,7 +270,7 @@ function registerChannel() {
         setTyping(false);
       }
     })
-    .listen('.typing.updated', (event) => {
+    .listen('typing.updated', (event) => {
       if (event.senderRole === 'admin') {
         setTyping(!!event.isTyping);
       }
