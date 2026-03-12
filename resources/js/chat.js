@@ -3,12 +3,12 @@ import Pusher from 'pusher-js';
 
 window.Pusher = Pusher;
 
-const chatMessages = document.getElementById('chat-messages');
-const chatForm = document.getElementById('chat-form');
-const chatInput = document.getElementById('chat-text');
-const chatTyping = document.getElementById('chat-typing');
-const attachButton = document.getElementById('chat-attach');
-const fileInput = document.getElementById('chat-file');
+let chatMessages;
+let chatForm;
+let chatInput;
+let chatTyping;
+let attachButton;
+let fileInput;
 
 const sessionKey = 'chat_conversation_id';
 let conversationId = localStorage.getItem(sessionKey);
@@ -17,6 +17,95 @@ let isTyping = false;
 let pollTimer = null;
 
 const POLL_INTERVAL_MS = 5000;
+
+function initializeDOMElements() {
+  chatMessages = document.getElementById('chat-messages');
+  chatForm = document.getElementById('chat-form');
+  chatInput = document.getElementById('chat-text');
+  chatTyping = document.getElementById('chat-typing');
+  attachButton = document.getElementById('chat-attach');
+  fileInput = document.getElementById('chat-file');
+
+  if (!chatForm || !chatMessages) {
+    console.error('Chat form or messages element not found');
+    return false;
+  }
+  return true;
+}
+
+function setupEventListeners() {
+  if (!chatForm) return;
+
+  chatForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const text = chatInput.value.trim();
+    if (!text) {
+      return;
+    }
+    const payload = { messageType: 'text', text };
+    appendMessage(payload, 'user');
+    await sendMessage(payload);
+    chatInput.value = '';
+    if (isTyping) {
+      isTyping = false;
+      await sendTyping(false);
+    }
+  });
+
+  chatInput.addEventListener('input', async () => {
+    if (!isTyping) {
+      isTyping = true;
+      await sendTyping(true);
+    }
+    if (typingTimer) {
+      clearTimeout(typingTimer);
+    }
+    typingTimer = setTimeout(async () => {
+      if (isTyping) {
+        isTyping = false;
+        await sendTyping(false);
+      }
+    }, 1200);
+  });
+
+  chatInput.addEventListener('blur', async () => {
+    if (isTyping) {
+      isTyping = false;
+      await sendTyping(false);
+    }
+  });
+
+  attachButton.addEventListener('click', () => {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files?.[0];
+    if (!file) {
+      return;
+    }
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch('/api/uploads', {
+      method: 'POST',
+      body: formData,
+    });
+    const data = await response.json();
+    if (!data.fileUrl) {
+      return;
+    }
+    const payload = {
+      messageType: 'file',
+      text: '',
+      fileUrl: data.fileUrl,
+      fileName: data.fileName,
+      fileMime: data.fileMime,
+    };
+    appendMessage(payload, 'user');
+    await sendMessage(payload);
+    fileInput.value = '';
+  });
+}
 
 const pusherKey = import.meta.env?.VITE_PUSHER_APP_KEY || '';
 const pusherHost = import.meta.env?.VITE_PUSHER_HOST || window.location.hostname;
@@ -200,74 +289,17 @@ async function init() {
   }
 }
 
-chatForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const text = chatInput.value.trim();
-  if (!text) {
+function initializeChat() {
+  if (!initializeDOMElements()) {
+    console.error('Failed to initialize chat elements');
     return;
   }
-  const payload = { messageType: 'text', text };
-  appendMessage(payload, 'user');
-  await sendMessage(payload);
-  chatInput.value = '';
-  if (isTyping) {
-    isTyping = false;
-    await sendTyping(false);
-  }
-});
+  setupEventListeners();
+  init();
+}
 
-chatInput.addEventListener('input', async () => {
-  if (!isTyping) {
-    isTyping = true;
-    await sendTyping(true);
-  }
-  if (typingTimer) {
-    clearTimeout(typingTimer);
-  }
-  typingTimer = setTimeout(async () => {
-    if (isTyping) {
-      isTyping = false;
-      await sendTyping(false);
-    }
-  }, 1200);
-});
-
-chatInput.addEventListener('blur', async () => {
-  if (isTyping) {
-    isTyping = false;
-    await sendTyping(false);
-  }
-});
-
-attachButton.addEventListener('click', () => {
-  fileInput.click();
-});
-
-fileInput.addEventListener('change', async () => {
-  const file = fileInput.files?.[0];
-  if (!file) {
-    return;
-  }
-  const formData = new FormData();
-  formData.append('file', file);
-  const response = await fetch('/api/uploads', {
-    method: 'POST',
-    body: formData,
-  });
-  const data = await response.json();
-  if (!data.fileUrl) {
-    return;
-  }
-  const payload = {
-    messageType: 'file',
-    text: '',
-    fileUrl: data.fileUrl,
-    fileName: data.fileName,
-    fileMime: data.fileMime,
-  };
-  appendMessage(payload, 'user');
-  await sendMessage(payload);
-  fileInput.value = '';
-});
-
-init();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeChat);
+} else {
+  initializeChat();
+}
