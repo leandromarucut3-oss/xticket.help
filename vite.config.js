@@ -19,5 +19,10 @@ export default defineConfig({
         watch: {
             ignored: ['**/storage/framework/views/**'],
         },
+        hmr: {
+            host: 'xtickethelp-main-xznhlo.laravel.cloud',
+            protocol: 'https',
+        },
+        middlewareMode: false,
     },
 });
