@@ -107,7 +107,7 @@ function setupEventListeners() {
   });
 }
 
-const pusherKey = import.meta.env?.VITE_REVERB_APP_KEY || '';
+const pusherKey = import.meta.env?.VITE_PUSHER_APP_KEY || '';
 
 let echo = null;
 // Use global Echo instance from bootstrap.js if available
@@ -120,13 +120,10 @@ if (window.Echo) {
     const Pusher = await import('pusher-js');
     window.Pusher = Pusher;
     echo = new Echo({
-      broadcaster: 'reverb',
-      key: import.meta.env?.VITE_REVERB_APP_KEY,
-      wsHost: import.meta.env?.VITE_REVERB_HOST || window.location.hostname,
-      wsPort: Number(import.meta.env?.VITE_REVERB_PORT) || 6001,
-      wssPort: Number(import.meta.env?.VITE_REVERB_PORT) || 443,
-      forceTLS: (import.meta.env?.VITE_REVERB_SCHEME || 'https') === 'https',
-      enabledTransports: ['ws', 'wss'],
+      broadcaster: 'pusher',
+      key: import.meta.env?.VITE_PUSHER_APP_KEY,
+      cluster: 'ap1',
+      forceTLS: true,
     });
   } catch (error) {
     console.warn('Realtime chat disabled:', error);
