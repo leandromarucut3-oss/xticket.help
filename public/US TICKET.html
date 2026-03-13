@@ -182,168 +182,6 @@ color:#536471;
 font-weight: 600;
 }
 
-/* CHAT BUTTON */
-
-.chat-button{
-display:block;
-margin:24px auto 0;
-padding:12px 32px;
-border:none;
-border-radius:20px;
-background:#000;
-color:#fff;
-font-size:15px;
-font-weight:600;
-font-family:inherit;
-cursor:pointer;
-transition:background-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.chat-button:hover{
-background-color:#1a1a1a;
-box-shadow:rgba(0, 0, 0, 0.3) 0 0 20px;
-}
-
-.chat-button:active{
-background-color:#333;
-}
-
-/* CHATBOX */
-
-.chatbox-overlay{
-display:none;
-position:fixed;
-top:0;
-left:0;
-right:0;
-bottom:0;
-background-color:rgba(0, 0, 0, 0.5);
-z-index:999;
-}
-
-.chatbox-overlay.active{
-display:block;
-}
-
-.chatbox-container{
-position:fixed;
-bottom:20px;
-right:20px;
-width:380px;
-height:500px;
-background:#fff;
-border-radius:12px;
-box-shadow:0 5px 40px rgba(0, 0, 0, 0.16);
-display:flex;
-flex-direction:column;
-z-index:1000;
-display:none;
-}
-
-.chatbox-container.active{
-display:flex;
-}
-
-.chatbox-header{
-border-bottom:1px solid #e6ecf0;
-padding:16px;
-display:flex;
-align-items:center;
-justify-content:space-between;
-background:#f7f9fa;
-border-radius:12px 12px 0 0;
-}
-
-.chatbox-title{
-font-weight:700;
-font-size:16px;
-color:#0f1419;
-}
-
-.chatbox-close{
-background:none;
-border:none;
-font-size:20px;
-color:#536471;
-cursor:pointer;
-transition:color 0.2s ease;
-}
-
-.chatbox-close:hover{
-color:#0f1419;
-}
-
-.chatbox-messages{
-flex:1;
-overflow-y:auto;
-padding:16px;
-display:flex;
-flex-direction:column;
-gap:12px;
-}
-
-.message{
-padding:10px 12px;
-border-radius:8px;
-font-size:14px;
-line-height:1.4;
-}
-
-.message.admin{
-background:#e7f3ff;
-color:#0f1419;
-max-width:80%;
-align-self:flex-start;
-}
-
-.message.user{
-background:#1d9bf0;
-color:#fff;
-max-width:80%;
-align-self:flex-end;
-}
-
-.chatbox-input{
-padding:16px;
-border-top:1px solid #e6ecf0;
-display:flex;
-gap:8px;
-}
-
-.chatbox-input input{
-flex:1;
-border:1px solid #e6ecf0;
-border-radius:20px;
-padding:10px 16px;
-font-family:inherit;
-font-size:14px;
-outline:none;
-transition:border-color 0.2s ease;
-}
-
-.chatbox-input input:focus{
-border-color:#1d9bf0;
-}
-
-.chatbox-send{
-background:#1d9bf0;
-border:none;
-border-radius:50%;
-width:36px;
-height:36px;
-display:flex;
-align-items:center;
-justify-content:center;
-color:#fff;
-cursor:pointer;
-transition:background-color 0.2s ease;
-font-weight:700;
-}
-
-.chatbox-send:hover{
-background-color:#1a91da;
-}
-
 /* HELP CENTER FOOTER */
 
 .site-footer{
@@ -353,6 +191,210 @@ border-top:1px solid #e6ecf0;
 text-align:center;
 font-size:13px;
 color:#536471;
+}
+
+/* CHAT WITH US BUTTON */
+
+.chat-button{
+position:fixed;
+bottom:24px;
+right:24px;
+background:#000;
+color:#fff;
+border:none;
+padding:12px 24px;
+border-radius:20px;
+font-weight:600;
+font-size:14px;
+cursor:pointer;
+transition:all 0.2s ease;
+box-shadow:0 2px 8px rgba(0,0,0,0.15);
+font-family:inherit;
+z-index:998;
+}
+
+.chat-button:hover{
+background:#1d1d1d;
+box-shadow:0 4px 12px rgba(0,0,0,0.25);
+}
+
+.chat-button:active{
+background:#0f0f0f;
+}
+
+/* CHATBOX STYLES */
+
+.chatbox-overlay{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.5);
+z-index:999;
+}
+
+.chatbox-overlay.active{
+display:block;
+}
+
+.chatbox-container{
+position:fixed;
+bottom:24px;
+right:24px;
+width:380px;
+max-height:600px;
+background:#fff;
+border-radius:12px;
+box-shadow:0 4px 16px rgba(0,0,0,0.15);
+display:flex;
+flex-direction:column;
+z-index:1000;
+visibility:hidden;
+opacity:0;
+transform:scale(0.95);
+transition:all 0.2s ease;
+}
+
+.chatbox-container.active{
+visibility:visible;
+opacity:1;
+transform:scale(1);
+}
+
+.chatbox-header{
+padding:16px;
+background:#000;
+color:#fff;
+border-radius:12px 12px 0 0;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.chatbox-header h3{
+font-size:16px;
+font-weight:600;
+margin:0;
+}
+
+.chatbox-close{
+background:none;
+border:none;
+color:#fff;
+font-size:24px;
+cursor:pointer;
+padding:0;
+width:24px;
+height:24px;
+display:flex;
+align-items:center;
+justify-content:center;
+transition:opacity 0.2s;
+}
+
+.chatbox-close:hover{
+opacity:0.7;
+}
+
+.chatbox-messages{
+flex:1;
+overflow-y:auto;
+padding:16px;
+display:flex;
+flex-direction:column;
+gap:12px;
+background:#fff;
+}
+
+.message{
+display:flex;
+margin-bottom:8px;
+animation:slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn{
+from{
+opacity:0;
+transform:translateY(10px);
+}
+to{
+opacity:1;
+transform:translateY(0);
+}
+}
+
+.message.user{
+justify-content:flex-end;
+}
+
+.message.admin{
+justify-content:flex-start;
+}
+
+.message-content{
+max-width:70%;
+padding:10px 14px;
+border-radius:12px;
+font-size:13px;
+line-height:1.5;
+word-wrap:break-word;
+}
+
+.message.user .message-content{
+background:#1d9bf0;
+color:#fff;
+border-radius:18px 4px 18px 18px;
+}
+
+.message.admin .message-content{
+background:#e6ecf0;
+color:#0f1419;
+border-radius:4px 18px 18px 18px;
+}
+
+.chatbox-input{
+padding:14px;
+border-top:1px solid #e6ecf0;
+display:flex;
+gap:8px;
+}
+
+.chatbox-input input{
+flex:1;
+padding:10px 14px;
+border:1px solid #e6ecf0;
+border-radius:20px;
+font-family:inherit;
+font-size:13px;
+transition:border-color 0.2s;
+}
+
+.chatbox-input input:focus{
+outline:none;
+border-color:#1d9bf0;
+}
+
+.chatbox-input button{
+background:#1d9bf0;
+color:#fff;
+border:none;
+border-radius:20px;
+padding:10px 16px;
+cursor:pointer;
+font-weight:600;
+font-size:13px;
+transition:background 0.2s;
+font-family:inherit;
+}
+
+.chatbox-input button:hover{
+background:#1a8cd8;
+}
+
+.chatbox-input button:active{
+background:#1d9bf0;
 }
 
 </style>
@@ -431,61 +473,91 @@ who handled this report.
 
 <hr class="divider">
 
-<div style="text-align:center;">
-<button class="chat-button">Chat With Us</button>
+<div class="footer">
+Twitter ID: @Eidan_XSafety
 </div>
 
+<div class="badge">
+X Twitter Support | Eidan Cervantes
 </div>
 
-<!-- CHATBOX -->
-<div class="chatbox-overlay" id="chatboxOverlay"></div>
-<div class="chatbox-container" id="chatbox">
-<div class="chatbox-header">
-<span class="chatbox-title">Chat with Admin</span>
-<button class="chatbox-close" id="closeChat">×</button>
-</div>
-<div class="chatbox-messages" id="chatMessages">
-<div class="message admin">Hi! How can we help you today?</div>
-</div>
-<div class="chatbox-input">
-<input type="text" id="messageInput" placeholder="Type your message..." />
-<button class="chatbox-send" id="sendBtn">→</button>
-</div>
 </div>
 
 <div class="site-footer">
-© 2026 X Corp. Help Center
+c 2026 X Corp. Help Center
 </div>
 
-<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
-<script>
-// Enable persistent storage using modern navigator.storage API
-if ('storage' in navigator && 'persist' in navigator.storage) {
-  navigator.storage.persist().catch(err => console.warn('Persistent storage unavailable:', err));
-}
+<!-- Chat Button -->
+<button class="chat-button" id="chatButton">Chat With Us</button>
 
-// Pusher configuration
+<!-- Chatbox Overlay -->
+<div class="chatbox-overlay" id="chatboxOverlay"></div>
+
+<!-- Chatbox Container -->
+<div class="chatbox-container" id="chatboxContainer">
+<div class="chatbox-header">
+<h3>X Support</h3>
+<button class="chatbox-close" id="closeChat">&times;</button>
+</div>
+<div class="chatbox-messages" id="chatboxMessages"></div>
+<div class="chatbox-input">
+<input type="text" id="messageInput" placeholder="Type your message...">
+<button id="sendButton">Send</button>
+</div>
+</div>
+
+<!-- Pusher Library -->
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+
+<script>
+// Initialize conversation ID from localStorage
+let conversationId = localStorage.getItem('chatConversationId');
+
+// Initialize Pusher
 const pusher = new Pusher('aab25858a3a74d75f5ee', {
   cluster: 'ap1',
   forceTLS: true,
   enableTransports: ['ws', 'wss']
 });
 
-const chatButton = document.querySelector('.chat-button');
-const chatbox = document.getElementById('chatbox');
+if (window.navigator && window.navigator.storage && window.navigator.storage.persist) {
+  window.navigator.storage.persist().catch(() => {
+    console.log('Storage persistence not available');
+  });
+}
+
+console.log('Pusher initialized. Conversation ID:', conversationId);
+
+// Chat UI Elements
+const chatButton = document.getElementById('chatButton');
+const chatboxContainer = document.getElementById('chatboxContainer');
 const chatboxOverlay = document.getElementById('chatboxOverlay');
 const closeBtn = document.getElementById('closeChat');
-const sendBtn = document.getElementById('sendBtn');
 const messageInput = document.getElementById('messageInput');
-const chatMessages = document.getElementById('chatMessages');
+const sendButton = document.getElementById('sendButton');
+const chatboxMessages = document.getElementById('chatboxMessages');
 
-let conversationId = localStorage.getItem('chatConversationId');
-let isLoadingMessages = false;
 let channel = null;
 
-// Initialize chatbox
+// Open/Close Chatbox
+chatButton.addEventListener('click', () => {
+  chatboxContainer.classList.add('active');
+  chatboxOverlay.classList.add('active');
+  messageInput.focus();
+  initializeChatbox();
+});
+
+closeBtn.addEventListener('click', closeChatbox);
+chatboxOverlay.addEventListener('click', closeChatbox);
+
+function closeChatbox() {
+  chatboxContainer.classList.remove('active');
+  chatboxOverlay.classList.remove('active');
+}
+
+// Initialize Chatbox
 async function initializeChatbox() {
-  // Check if conversation already exists in localStorage
+  // If already have conversation ID, just subscribe and load
   if (conversationId && conversationId.trim() !== '') {
     console.log('Using existing conversation:', conversationId);
     subscribeToConversation();
@@ -493,107 +565,75 @@ async function initializeChatbox() {
     return;
   }
 
-  // Create new conversation
+  // Otherwise create new conversation
   try {
-    const response = await fetch('/api/conversations', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'}
-    });
-
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
+    const response = await fetch('/api/conversations', {method: 'POST'});
     const data = await response.json();
     conversationId = data.conversationId;
-
-    // Save conversation ID to localStorage
     localStorage.setItem('chatConversationId', conversationId);
-
-    // Subscribe to conversation channel for real-time updates
+    console.log('Created new conversation:', conversationId);
     subscribeToConversation();
-    clearMessages();
     loadMessages();
-    console.log('New conversation created:', conversationId);
   } catch (error) {
-    console.error('Failed to create conversation:', error);
-    addMessageToUI('Error: Could not start chat. Please refresh and try again.', 'admin');
+    console.error('Error creating conversation:', error);
   }
 }
 
-// Subscribe to real-time conversation updates
+// Subscribe to Conversation
 function subscribeToConversation() {
-  if (channel) channel.unbind_all();
-
-  channel = pusher.subscribe(`conversation.${conversationId}`);
-
+  if (channel) {
+    pusher.unsubscribe('conversation.' + conversationId);
+  }
+  
+  channel = pusher.subscribe('conversation.' + conversationId);
+  
   channel.bind('message.sent', function(data) {
-    console.log('New message received:', data);
-    if (data.senderRole === 'admin') {
-      addMessageToUI(data.text, 'admin');
-    }
+    console.log('Message received:', data);
+    addMessage(data.text, data.senderRole);
+  });
+
+  channel.bind('typing.updated', function(data) {
+    console.log('Typing update:', data);
   });
 
   channel.bind('pusher:subscription_succeeded', function() {
-    console.log('Successfully subscribed to conversation:', conversationId);
-  });
-
-  channel.bind('pusher:subscription_error', function(error) {
-    console.error('Subscription error:', error);
+    console.log('Subscribed to conversation:', conversationId);
   });
 }
 
-// Load messages from API
+// Load Messages
 async function loadMessages() {
-  if (!conversationId || isLoadingMessages) return;
-  isLoadingMessages = true;
-
   try {
     const response = await fetch(`/api/conversations/${conversationId}/messages`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
     const messages = await response.json();
-    clearMessages();
-
-    if (messages.length === 0) {
-      addMessageToUI('Hi! How can we help you today?', 'admin');
-    } else {
-      messages.forEach(msg => {
-        addMessageToUI(msg.text, msg.sender_role);
-      });
-    }
+    chatboxMessages.innerHTML = '';
+    messages.forEach(msg => {
+      addMessage(msg.text, msg.sender_role);
+    });
   } catch (error) {
-    console.error('Failed to load messages:', error);
-    addMessageToUI('Could not load messages. Please try again.', 'admin');
-  } finally {
-    isLoadingMessages = false;
+    console.error('Error loading messages:', error);
   }
 }
 
-// Add message to UI
-function addMessageToUI(text, senderRole) {
-  const msgDiv = document.createElement('div');
-  msgDiv.className = 'message ' + senderRole;
-  msgDiv.textContent = text;
-  msgDiv.style.wordWrap = 'break-word';
-  chatMessages.appendChild(msgDiv);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+// Add Message to UI
+function addMessage(text, senderRole) {
+  const messageEl = document.createElement('div');
+  messageEl.className = `message ${senderRole}`;
+  messageEl.innerHTML = `<div class="message-content">${escapeHtml(text)}</div>`;
+  chatboxMessages.appendChild(messageEl);
+  chatboxMessages.scrollTop = chatboxMessages.scrollHeight;
 }
 
-// Clear messages
-function clearMessages() {
-  chatMessages.innerHTML = '';
-}
-
-// Send message to API
+// Send Message
 async function sendMessage() {
   const message = messageInput.value.trim();
-  if (message === '') return;
-  if (!conversationId) {
-    addMessageToUI('Initializing chat...', 'admin');
-    return;
-  }
+  if (!message) return;
+
+  messageInput.value = '';
+  addMessage(message, 'user');
 
   try {
-    const response = await fetch(`/api/conversations/${conversationId}/messages`, {
+    await fetch(`/api/conversations/${conversationId}/messages`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
@@ -602,76 +642,32 @@ async function sendMessage() {
         text: message
       })
     });
-
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    addMessageToUI(message, 'user');
-    messageInput.value = '';
-    messageInput.focus();
-    console.log('Message sent successfully');
   } catch (error) {
-    console.error('Failed to send message:', error);
-    addMessageToUI('Failed to send message. Please try again.', 'admin');
+    console.error('Error sending message:', error);
   }
 }
 
-// Open chatbox
-chatButton.addEventListener('click', async function() {
-  if (!conversationId) {
-    await initializeChatbox();
-  }
-  chatbox.classList.add('active');
-  chatboxOverlay.classList.add('active');
-  messageInput.focus();
+// Send on Enter Key
+messageInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') sendMessage();
 });
 
-// Close chatbox
-function closeChatbox() {
-  chatbox.classList.remove('active');
-  chatboxOverlay.classList.remove('active');
+sendButton.addEventListener('click', sendMessage);
+
+// Escape HTML
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
-closeBtn.addEventListener('click', closeChatbox);
-chatboxOverlay.addEventListener('click', closeChatbox);
-
-sendBtn.addEventListener('click', sendMessage);
-messageInput.addEventListener('keypress', function(e) {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    sendMessage();
-  }
-});
-
-// Log Pusher connection status
-pusher.connection.bind('connected', function() {
-  console.log('✅ Chatbox: Connected to Pusher');
-});
-
-pusher.connection.bind('disconnected', function() {
-  console.log('❌ Chatbox: Disconnected from Pusher');
-});
-
-pusher.connection.bind('error', function(error) {
-  console.error('❌ Chatbox: Pusher connection error:', error);
-});
-
-// Function to clear chat history and start fresh
+// Clear Chat History (for testing)
 function clearChatHistory() {
   localStorage.removeItem('chatConversationId');
   conversationId = null;
-  clearMessages();
-  addMessageToUI('Hi! How can we help you today?', 'admin');
+  chatboxMessages.innerHTML = '';
   console.log('Chat history cleared');
 }
-
-// Initial console info
-console.log('Chatbox initialized with Pusher key:', 'aab25858a3a74d75f5ee');
-console.log('Pusher cluster:', 'ap1');
-console.log('Chat history persistence enabled via localStorage');
-if (conversationId) {
-  console.log('Existing chat session found:', conversationId);
-}
-</script>
 </script>
 
 </body>
