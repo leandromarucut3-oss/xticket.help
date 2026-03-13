@@ -184,7 +184,7 @@ function selectConversation(conversationId) {
     channel.stopListening('.typing.updated');
   }
   if (echo) {
-    channel = echo.private(`conversation.${conversationId}`)
+    channel = echo.channel(`conversation.${conversationId}`)
       .listen('message.sent', (event) => {
         if (event.senderRole === 'user') {
           addMessage({
