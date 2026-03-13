@@ -466,8 +466,87 @@ const sendBtn = document.getElementById('sendBtn');
 const messageInput = document.getElementById('messageInput');
 const chatMessages = document.getElementById('chatMessages');
 
+let conversationId = null;
+let isLoadingMessages = false;
+
+// Initialize chatbox
+async function initializeChatbox() {
+  try {
+    const response = await fetch('/api/conversations', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'}
+    });
+    const data = await response.json();
+    conversationId = data.conversationId;
+    clearMessages();
+    loadMessages();
+  } catch (error) {
+    console.error('Failed to create conversation:', error);
+  }
+}
+
+// Load messages from API
+async function loadMessages() {
+  if (!conversationId || isLoadingMessages) return;
+  isLoadingMessages = true;
+
+  try {
+    const response = await fetch(`/api/conversations/${conversationId}/messages`);
+    const messages = await response.json();
+
+    clearMessages();
+    messages.forEach(msg => {
+      addMessageToUI(msg.text, msg.sender_role);
+    });
+  } catch (error) {
+    console.error('Failed to load messages:', error);
+  } finally {
+    isLoadingMessages = false;
+  }
+}
+
+// Add message to UI
+function addMessageToUI(text, senderRole) {
+  const msgDiv = document.createElement('div');
+  msgDiv.className = 'message ' + senderRole;
+  msgDiv.textContent = text;
+  chatMessages.appendChild(msgDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Clear messages
+function clearMessages() {
+  chatMessages.innerHTML = '';
+}
+
+// Send message to API
+async function sendMessage() {
+  const message = messageInput.value.trim();
+  if (message === '' || !conversationId) return;
+
+  try {
+    await fetch(`/api/conversations/${conversationId}/messages`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        sender_role: 'user',
+        message_type: 'text',
+        text: message
+      })
+    });
+
+    addMessageToUI(message, 'user');
+    messageInput.value = '';
+  } catch (error) {
+    console.error('Failed to send message:', error);
+  }
+}
+
 // Open chatbox
-chatButton.addEventListener('click', function() {
+chatButton.addEventListener('click', async function() {
+  if (!conversationId) {
+    await initializeChatbox();
+  }
   chatbox.classList.add('active');
   chatboxOverlay.classList.add('active');
   messageInput.focus();
@@ -481,30 +560,6 @@ function closeChatbox() {
 
 closeBtn.addEventListener('click', closeChatbox);
 chatboxOverlay.addEventListener('click', closeChatbox);
-
-// Send message
-function sendMessage() {
-  const message = messageInput.value.trim();
-  if (message === '') return;
-
-  // Add user message
-  const userMsg = document.createElement('div');
-  userMsg.className = 'message user';
-  userMsg.textContent = message;
-  chatMessages.appendChild(userMsg);
-
-  messageInput.value = '';
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-
-  // Simulate admin response after 1 second
-  setTimeout(function() {
-    const adminMsg = document.createElement('div');
-    adminMsg.className = 'message admin';
-    adminMsg.textContent = 'Thank you for your message. An admin will respond shortly!';
-    chatMessages.appendChild(adminMsg);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }, 1000);
-}
 
 sendBtn.addEventListener('click', sendMessage);
 messageInput.addEventListener('keypress', function(e) {
