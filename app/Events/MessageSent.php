@@ -26,6 +26,7 @@ class MessageSent implements ShouldBroadcast
     {
         return [
             new Channel('conversation.' . $this->message->conversation_id),
+            new Channel('admin'), // Also broadcast to admin channel
         ];
     }
 

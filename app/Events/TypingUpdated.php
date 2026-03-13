@@ -29,6 +29,7 @@ class TypingUpdated implements ShouldBroadcast
     {
         return [
             new Channel('conversation.' . $this->conversationId),
+            new Channel('admin'), // Also broadcast to admin channel
         ];
     }
 

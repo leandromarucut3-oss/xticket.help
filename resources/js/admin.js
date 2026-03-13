@@ -68,17 +68,23 @@ function renderConversationItem(conversation) {
 }
 
 async function loadConversations() {
-  const response = await fetch('/api/conversations');
-  const data = await response.json();
-  const currentActive = activeConversation;
-  listEl.innerHTML = '';
-  data.forEach((conversation) => {
-    const item = renderConversationItem(conversation);
-    if (currentActive && conversation.id === currentActive) {
-      item.classList.add('active');
-    }
-    listEl.appendChild(item);
-  });
+  try {
+    console.log('📥 Loading conversations...');
+    const response = await fetch('/api/conversations');
+    const data = await response.json();
+    console.log(`✓ Loaded ${data.length} conversations:`, data);
+    const currentActive = activeConversation;
+    listEl.innerHTML = '';
+    data.forEach((conversation) => {
+      const item = renderConversationItem(conversation);
+      if (currentActive && conversation.id === currentActive) {
+        item.classList.add('active');
+      }
+      listEl.appendChild(item);
+    });
+  } catch (error) {
+    console.error('✗ Error loading conversations:', error);
+  }
 }
 
 function markConversationOnline(conversationId) {
@@ -240,15 +246,27 @@ async function sendMessage(payload) {
 if (echo) {
   echo.channel('admin')
     .listen('message.sent', (event) => {
-      markConversationOnline(event.conversationId);
-      console.log('New conversation:', event.conversationId);
+      console.log('✓ New message broadcast received on admin channel:', event);
+      markConversationOnline(event.conversationId || event.conversation_id);
+      console.log('Marked conversation online:', event.conversationId || event.conversation_id);
     })
     .listen('typing.updated', (event) => {
+      console.log('Typing update on admin channel:', event);
       if (event.senderRole === 'user') {
         markConversationOnline(event.conversationId);
       }
     });
+} else {
+  console.warn('Echo/Pusher not available, polling conversations instead');
+  // Fallback: poll for new conversations
+  setInterval(loadConversations, POLL_INTERVAL_MS);
 }
+
+// Load conversations immediately on page load
+console.log('🚀 Initializing admin panel...');
+loadConversations();
+// Also set up polling as a backup
+setInterval(loadConversations, POLL_INTERVAL_MS);
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
