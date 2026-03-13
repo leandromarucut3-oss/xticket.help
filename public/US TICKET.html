@@ -581,6 +581,7 @@ const chatboxMessages = document.getElementById('chatboxMessages');
 const connectionStatus = document.getElementById('connectionStatus');
 
 let channel = null;
+let messagePollingInterval = null;
 
 // Update connection status indicator
 pusher.connection.bind('connected', () => {
@@ -621,6 +622,12 @@ chatboxOverlay.addEventListener('click', closeChatbox);
 function closeChatbox() {
   chatboxContainer.classList.remove('active');
   chatboxOverlay.classList.remove('active');
+
+  // Clean up polling interval
+  if (messagePollingInterval) {
+    clearInterval(messagePollingInterval);
+    messagePollingInterval = null;
+  }
 }
 
 // Initialize Chatbox
@@ -667,7 +674,7 @@ function subscribeToConversation() {
   });
 
   channel.bind('message.sent', function(data) {
-    console.log('Message received from Pusher:', data);
+    console.log('✓ Real-time message received from Pusher:', data);
     // Handle both senderRole (camelCase from event) and sender_role (snake_case)
     const senderRole = data.senderRole || data.sender_role || 'admin';
     const text = data.text || data.message || '';
@@ -678,6 +685,37 @@ function subscribeToConversation() {
   channel.bind('typing.updated', function(data) {
     console.log('Typing update:', data);
   });
+
+  // Fallback: polling for messages every 2 seconds as backup
+  // This ensures messages show up even if Pusher fails
+  if (messagePollingInterval) {
+    clearInterval(messagePollingInterval);
+  }
+
+  let lastMessageCount = 0;
+  messagePollingInterval = setInterval(async () => {
+    try {
+      const response = await fetch(`/api/conversations/${conversationId}/messages`);
+      if (!response.ok) return;
+
+      const messages = await response.json();
+      if (messages.length > lastMessageCount) {
+        console.log('📥 New messages detected via polling:', messages.length - lastMessageCount);
+        // Remove old messages and reload
+        const currentMessages = chatboxMessages.querySelectorAll('.message');
+        if (currentMessages.length < messages.length) {
+          // New message arrived, load all
+          chatboxMessages.innerHTML = '';
+          messages.forEach(msg => {
+            addMessage(msg.text, msg.sender_role);
+          });
+          lastMessageCount = messages.length;
+        }
+      }
+    } catch (error) {
+      console.error('Polling error:', error);
+    }
+  }, 2000);
 }
 
 // Load Messages
