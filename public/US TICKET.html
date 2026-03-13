@@ -279,6 +279,33 @@ font-weight:600;
 margin:0;
 }
 
+.connection-status{
+display:inline-block;
+width:8px;
+height:8px;
+border-radius:50%;
+margin-right:8px;
+background:#ff4444;
+animation:pulse 2s infinite;
+}
+
+.connection-status.connected{
+background:#44ff44;
+animation:none;
+}
+
+@keyframes pulse{
+from{
+opacity:1;
+}
+50%{
+opacity:0.5;
+}
+to{
+opacity:1;
+}
+}
+
 .chatbox-close{
 background:none;
 border:none;
@@ -496,7 +523,7 @@ c 2026 X Corp. Help Center
 <!-- Chatbox Container -->
 <div class="chatbox-container" id="chatboxContainer">
 <div class="chatbox-header">
-<h3>X Support</h3>
+<h3><span class="connection-status" id="connectionStatus"></span>X Support</h3>
 <button class="chatbox-close" id="closeChat">&times;</button>
 </div>
 <div class="chatbox-messages" id="chatboxMessages"></div>
@@ -520,6 +547,21 @@ const pusher = new Pusher('aab25858a3a74d75f5ee', {
   enableTransports: ['ws', 'wss']
 });
 
+// Enable Pusher debug logging
+Pusher.logToConsole = true;
+
+pusher.connection.bind('connected', () => {
+  console.log('✓ Pusher connected successfully');
+});
+
+pusher.connection.bind('failed', () => {
+  console.error('✗ Pusher connection failed');
+});
+
+pusher.connection.bind('error', (err) => {
+  console.error('✗ Pusher error:', err);
+});
+
 if (window.navigator && window.navigator.storage && window.navigator.storage.persist) {
   window.navigator.storage.persist().catch(() => {
     console.log('Storage persistence not available');
@@ -536,8 +578,34 @@ const closeBtn = document.getElementById('closeChat');
 const messageInput = document.getElementById('messageInput');
 const sendButton = document.getElementById('sendButton');
 const chatboxMessages = document.getElementById('chatboxMessages');
+const connectionStatus = document.getElementById('connectionStatus');
 
 let channel = null;
+
+// Update connection status indicator
+pusher.connection.bind('connected', () => {
+  console.log('✓ Pusher connected successfully');
+  if (connectionStatus) {
+    connectionStatus.classList.add('connected');
+    connectionStatus.title = 'Connected';
+  }
+});
+
+pusher.connection.bind('disconnected', () => {
+  console.log('Pusher disconnected');
+  if (connectionStatus) {
+    connectionStatus.classList.remove('connected');
+    connectionStatus.title = 'Disconnected';
+  }
+});
+
+pusher.connection.bind('failed', () => {
+  console.error('✗ Pusher connection failed');
+  if (connectionStatus) {
+    connectionStatus.classList.remove('connected');
+    connectionStatus.title = 'Connection Failed';
+  }
+});
 
 // Open/Close Chatbox
 chatButton.addEventListener('click', () => {
@@ -584,30 +652,55 @@ function subscribeToConversation() {
   if (channel) {
     pusher.unsubscribe('conversation.' + conversationId);
   }
-  
-  channel = pusher.subscribe('conversation.' + conversationId);
-  
+
+  const channelName = 'conversation.' + conversationId;
+  console.log('Subscribing to channel:', channelName);
+
+  channel = pusher.subscribe(channelName);
+
+  channel.bind('pusher:subscription_succeeded', function() {
+    console.log('✓ Successfully subscribed to:', channelName);
+  });
+
+  channel.bind('pusher:subscription_error', function(error) {
+    console.error('✗ Subscription error:', error);
+  });
+
   channel.bind('message.sent', function(data) {
-    console.log('Message received:', data);
-    addMessage(data.text, data.senderRole);
+    console.log('Message received from Pusher:', data);
+    // Handle both senderRole (camelCase from event) and sender_role (snake_case)
+    const senderRole = data.senderRole || data.sender_role || 'admin';
+    const text = data.text || data.message || '';
+    console.log('Adding message from', senderRole, ':', text);
+    addMessage(text, senderRole);
   });
 
   channel.bind('typing.updated', function(data) {
     console.log('Typing update:', data);
   });
-
-  channel.bind('pusher:subscription_succeeded', function() {
-    console.log('Subscribed to conversation:', conversationId);
-  });
 }
 
 // Load Messages
 async function loadMessages() {
+  if (!conversationId) {
+    console.error('No conversation ID available');
+    return;
+  }
+
   try {
+    console.log('Loading messages for conversation:', conversationId);
     const response = await fetch(`/api/conversations/${conversationId}/messages`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
     const messages = await response.json();
+    console.log('Loaded', messages.length, 'messages:', messages);
+
     chatboxMessages.innerHTML = '';
     messages.forEach(msg => {
+      console.log('Display message:', msg);
       addMessage(msg.text, msg.sender_role);
     });
   } catch (error) {
@@ -632,8 +725,14 @@ async function sendMessage() {
   messageInput.value = '';
   addMessage(message, 'user');
 
+  if (!conversationId) {
+    console.error('No conversation ID available');
+    return;
+  }
+
   try {
-    await fetch(`/api/conversations/${conversationId}/messages`, {
+    console.log('Sending message to API:', {conversationId, message});
+    const response = await fetch(`/api/conversations/${conversationId}/messages`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
@@ -642,8 +741,15 @@ async function sendMessage() {
         text: message
       })
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    console.log('✓ Message sent successfully:', result);
   } catch (error) {
-    console.error('Error sending message:', error);
+    console.error('✗ Error sending message:', error);
   }
 }
 
