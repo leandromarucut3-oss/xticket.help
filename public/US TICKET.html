@@ -479,12 +479,21 @@ const sendBtn = document.getElementById('sendBtn');
 const messageInput = document.getElementById('messageInput');
 const chatMessages = document.getElementById('chatMessages');
 
-let conversationId = null;
+let conversationId = localStorage.getItem('chatConversationId');
 let isLoadingMessages = false;
 let channel = null;
 
 // Initialize chatbox
 async function initializeChatbox() {
+  // Check if conversation already exists in localStorage
+  if (conversationId && conversationId.trim() !== '') {
+    console.log('Using existing conversation:', conversationId);
+    subscribeToConversation();
+    loadMessages();
+    return;
+  }
+
+  // Create new conversation
   try {
     const response = await fetch('/api/conversations', {
       method: 'POST',
@@ -496,11 +505,14 @@ async function initializeChatbox() {
     const data = await response.json();
     conversationId = data.conversationId;
 
+    // Save conversation ID to localStorage
+    localStorage.setItem('chatConversationId', conversationId);
+
     // Subscribe to conversation channel for real-time updates
     subscribeToConversation();
     clearMessages();
     loadMessages();
-    console.log('Conversation initialized:', conversationId);
+    console.log('New conversation created:', conversationId);
   } catch (error) {
     console.error('Failed to create conversation:', error);
     addMessageToUI('Error: Could not start chat. Please refresh and try again.', 'admin');
@@ -643,9 +655,22 @@ pusher.connection.bind('error', function(error) {
   console.error('❌ Chatbox: Pusher connection error:', error);
 });
 
+// Function to clear chat history and start fresh
+function clearChatHistory() {
+  localStorage.removeItem('chatConversationId');
+  conversationId = null;
+  clearMessages();
+  addMessageToUI('Hi! How can we help you today?', 'admin');
+  console.log('Chat history cleared');
+}
+
 // Initial console info
 console.log('Chatbox initialized with Pusher key:', 'aab25858a3a74d75f5ee');
 console.log('Pusher cluster:', 'ap1');
+console.log('Chat history persistence enabled via localStorage');
+if (conversationId) {
+  console.log('Existing chat session found:', conversationId);
+}
 </script>
 </script>
 
