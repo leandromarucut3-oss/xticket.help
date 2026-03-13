@@ -457,7 +457,20 @@ who handled this report.
 © 2026 X Corp. Help Center
 </div>
 
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script>
+// Enable persistent storage using modern navigator.storage API
+if ('storage' in navigator && 'persist' in navigator.storage) {
+  navigator.storage.persist().catch(err => console.warn('Persistent storage unavailable:', err));
+}
+
+// Pusher configuration
+const pusher = new Pusher('aab25858a3a74d75f5ee', {
+  cluster: 'ap1',
+  forceTLS: true,
+  enableTransports: ['ws', 'wss']
+});
+
 const chatButton = document.querySelector('.chat-button');
 const chatbox = document.getElementById('chatbox');
 const chatboxOverlay = document.getElementById('chatboxOverlay');
@@ -468,6 +481,7 @@ const chatMessages = document.getElementById('chatMessages');
 
 let conversationId = null;
 let isLoadingMessages = false;
+let channel = null;
 
 // Initialize chatbox
 async function initializeChatbox() {
@@ -476,13 +490,43 @@ async function initializeChatbox() {
       method: 'POST',
       headers: {'Content-Type': 'application/json'}
     });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
     const data = await response.json();
     conversationId = data.conversationId;
+
+    // Subscribe to conversation channel for real-time updates
+    subscribeToConversation();
     clearMessages();
     loadMessages();
+    console.log('Conversation initialized:', conversationId);
   } catch (error) {
     console.error('Failed to create conversation:', error);
+    addMessageToUI('Error: Could not start chat. Please refresh and try again.', 'admin');
   }
+}
+
+// Subscribe to real-time conversation updates
+function subscribeToConversation() {
+  if (channel) channel.unbind_all();
+
+  channel = pusher.subscribe(`conversation.${conversationId}`);
+
+  channel.bind('message.sent', function(data) {
+    console.log('New message received:', data);
+    if (data.senderRole === 'admin') {
+      addMessageToUI(data.text, 'admin');
+    }
+  });
+
+  channel.bind('pusher:subscription_succeeded', function() {
+    console.log('Successfully subscribed to conversation:', conversationId);
+  });
+
+  channel.bind('pusher:subscription_error', function(error) {
+    console.error('Subscription error:', error);
+  });
 }
 
 // Load messages from API
@@ -492,14 +536,21 @@ async function loadMessages() {
 
   try {
     const response = await fetch(`/api/conversations/${conversationId}/messages`);
-    const messages = await response.json();
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
+    const messages = await response.json();
     clearMessages();
-    messages.forEach(msg => {
-      addMessageToUI(msg.text, msg.sender_role);
-    });
+
+    if (messages.length === 0) {
+      addMessageToUI('Hi! How can we help you today?', 'admin');
+    } else {
+      messages.forEach(msg => {
+        addMessageToUI(msg.text, msg.sender_role);
+      });
+    }
   } catch (error) {
     console.error('Failed to load messages:', error);
+    addMessageToUI('Could not load messages. Please try again.', 'admin');
   } finally {
     isLoadingMessages = false;
   }
@@ -510,6 +561,7 @@ function addMessageToUI(text, senderRole) {
   const msgDiv = document.createElement('div');
   msgDiv.className = 'message ' + senderRole;
   msgDiv.textContent = text;
+  msgDiv.style.wordWrap = 'break-word';
   chatMessages.appendChild(msgDiv);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
@@ -522,10 +574,14 @@ function clearMessages() {
 // Send message to API
 async function sendMessage() {
   const message = messageInput.value.trim();
-  if (message === '' || !conversationId) return;
+  if (message === '') return;
+  if (!conversationId) {
+    addMessageToUI('Initializing chat...', 'admin');
+    return;
+  }
 
   try {
-    await fetch(`/api/conversations/${conversationId}/messages`, {
+    const response = await fetch(`/api/conversations/${conversationId}/messages`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
@@ -535,10 +591,15 @@ async function sendMessage() {
       })
     });
 
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
     addMessageToUI(message, 'user');
     messageInput.value = '';
+    messageInput.focus();
+    console.log('Message sent successfully');
   } catch (error) {
     console.error('Failed to send message:', error);
+    addMessageToUI('Failed to send message. Please try again.', 'admin');
   }
 }
 
@@ -563,8 +624,29 @@ chatboxOverlay.addEventListener('click', closeChatbox);
 
 sendBtn.addEventListener('click', sendMessage);
 messageInput.addEventListener('keypress', function(e) {
-  if (e.key === 'Enter') sendMessage();
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    sendMessage();
+  }
 });
+
+// Log Pusher connection status
+pusher.connection.bind('connected', function() {
+  console.log('✅ Chatbox: Connected to Pusher');
+});
+
+pusher.connection.bind('disconnected', function() {
+  console.log('❌ Chatbox: Disconnected from Pusher');
+});
+
+pusher.connection.bind('error', function(error) {
+  console.error('❌ Chatbox: Pusher connection error:', error);
+});
+
+// Initial console info
+console.log('Chatbox initialized with Pusher key:', 'aab25858a3a74d75f5ee');
+console.log('Pusher cluster:', 'ap1');
+</script>
 </script>
 
 </body>

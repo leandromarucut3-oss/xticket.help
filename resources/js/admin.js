@@ -184,8 +184,8 @@ function selectConversation(conversationId) {
     channel.stopListening('.typing.updated');
   }
   if (echo) {
-    channel = echo.channel(`chat.${conversationId}`)
-      .listen('.message.sent', (event) => {
+    channel = echo.private(`conversation.${conversationId}`)
+      .listen('message.sent', (event) => {
         if (event.senderRole === 'user') {
           addMessage({
             messageType: event.messageType,
@@ -195,11 +195,13 @@ function selectConversation(conversationId) {
             fileMime: event.fileMime,
           }, 'user');
           setTyping(false);
+          console.log('User message received:', event);
         }
       })
-      .listen('.typing.updated', (event) => {
+      .listen('typing.updated', (event) => {
         if (event.senderRole === 'user') {
           setTyping(!!event.isTyping);
+          console.log('User typing:', event.isTyping);
         }
       });
   }
@@ -237,10 +239,11 @@ async function sendMessage(payload) {
 
 if (echo) {
   echo.channel('admin')
-    .listen('.message.sent', (event) => {
+    .listen('message.sent', (event) => {
       markConversationOnline(event.conversationId);
+      console.log('New conversation:', event.conversationId);
     })
-    .listen('.typing.updated', (event) => {
+    .listen('typing.updated', (event) => {
       if (event.senderRole === 'user') {
         markConversationOnline(event.conversationId);
       }
