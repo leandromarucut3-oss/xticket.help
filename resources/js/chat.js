@@ -86,8 +86,12 @@ function setupEventListeners() {
     }
     const formData = new FormData();
     formData.append('file', file);
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     const response = await fetch('/api/uploads', {
       method: 'POST',
+      headers: {
+        'X-CSRF-TOKEN': csrfToken,
+      },
       body: formData,
     });
     const data = await response.json();
@@ -179,7 +183,14 @@ function appendMessage(payload, role) {
 }
 
 async function createConversation() {
-  const response = await fetch('/api/conversations', { method: 'POST' });
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+  const response = await fetch('/api/conversations', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': csrfToken,
+    },
+  });
   const data = await response.json();
   conversationId = data.conversationId;
   localStorage.setItem(sessionKey, conversationId);
@@ -233,9 +244,13 @@ async function sendTyping(isTypingValue) {
   if (!conversationId) {
     return;
   }
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
   await fetch(`/api/conversations/${conversationId}/typing`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': csrfToken,
+    },
     body: JSON.stringify({ sender_role: 'user', is_typing: isTypingValue }),
   });
 }
@@ -244,9 +259,13 @@ async function sendMessage(payload) {
   if (!conversationId) {
     return;
   }
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
   await fetch(`/api/conversations/${conversationId}/messages`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': csrfToken,
+    },
     body: JSON.stringify({
       sender_role: 'user',
       message_type: payload.messageType,

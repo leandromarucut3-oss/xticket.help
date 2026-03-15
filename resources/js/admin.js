@@ -261,9 +261,13 @@ async function sendTyping(isTypingValue) {
   if (!activeConversation || !echo) {
     return;
   }
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
   await fetch(`/api/conversations/${activeConversation}/typing`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': csrfToken,
+    },
     body: JSON.stringify({ sender_role: 'admin', is_typing: isTypingValue }),
   });
 }
@@ -272,9 +276,13 @@ async function sendMessage(payload) {
   if (!activeConversation) {
     return;
   }
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
   await fetch(`/api/conversations/${activeConversation}/messages`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': csrfToken,
+    },
     body: JSON.stringify({
       sender_role: 'admin',
       message_type: payload.messageType,
@@ -375,8 +383,12 @@ fileInput.addEventListener('change', async () => {
   }
   const formData = new FormData();
   formData.append('file', file);
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
   const response = await fetch('/api/uploads', {
     method: 'POST',
+    headers: {
+      'X-CSRF-TOKEN': csrfToken,
+    },
     body: formData,
   });
   const data = await response.json();
