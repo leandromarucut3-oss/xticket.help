@@ -107,7 +107,7 @@ function setupEventListeners() {
   });
 }
 
-const pusherKey = import.meta.env?.VITE_PUSHER_APP_KEY || '';
+const pusherKey = import.meta.env?.VITE_PUSHER_APP_KEY || (window.ECHO_CONFIG && window.ECHO_CONFIG.key) || '';
 
 let echo = null;
 // Use global Echo instance from bootstrap.js if available
@@ -119,11 +119,20 @@ if (window.Echo) {
     const Echo = await import('laravel-echo');
     const Pusher = await import('pusher-js');
     window.Pusher = Pusher;
+    const pusherHost = import.meta.env?.VITE_PUSHER_HOST || (window.ECHO_CONFIG && window.ECHO_CONFIG.host) || window.location.hostname;
+    const pusherPort = Number(import.meta.env?.VITE_PUSHER_PORT || (window.ECHO_CONFIG && window.ECHO_CONFIG.port) || 6001);
+    const pusherScheme = import.meta.env?.VITE_PUSHER_SCHEME || (window.ECHO_CONFIG && window.ECHO_CONFIG.scheme) || 'http';
+    const pusherCluster = import.meta.env?.VITE_PUSHER_APP_CLUSTER || (window.ECHO_CONFIG && window.ECHO_CONFIG.cluster) || 'mt1';
     echo = new Echo({
       broadcaster: 'pusher',
-      key: import.meta.env?.VITE_PUSHER_APP_KEY,
-      cluster: 'ap1',
-      forceTLS: true,
+      key: pusherKey,
+      wsHost: pusherHost,
+      wsPort: pusherPort,
+      wssPort: pusherPort,
+      forceTLS: pusherScheme === 'https',
+      cluster: pusherCluster,
+      disableStats: true,
+      enabledTransports: ['ws', 'wss'],
     });
   } catch (error) {
     console.warn('Realtime chat disabled:', error);
@@ -254,7 +263,7 @@ function registerChannel() {
     return;
   }
   echo
-    .private(`conversation.${conversationId}`)
+    .channel(`conversation.${conversationId}`)
     .listen('message.sent', (event) => {
       if (event.senderRole === 'admin') {
         appendMessage({

@@ -20,11 +20,11 @@ let typingTimer = null;
 let isTyping = false;
 let channel = null;
 
-const pusherKey = import.meta.env?.VITE_PUSHER_APP_KEY || '';
-const pusherHost = import.meta.env?.VITE_PUSHER_HOST || window.location.hostname;
-const pusherPort = Number(import.meta.env?.VITE_PUSHER_PORT || 6001);
-const pusherScheme = import.meta.env?.VITE_PUSHER_SCHEME || 'http';
-const pusherCluster = import.meta.env?.VITE_PUSHER_APP_CLUSTER || 'mt1';
+const pusherKey = import.meta.env?.VITE_PUSHER_APP_KEY || (window.ECHO_CONFIG && window.ECHO_CONFIG.key) || '';
+const pusherHost = import.meta.env?.VITE_PUSHER_HOST || (window.ECHO_CONFIG && window.ECHO_CONFIG.host) || window.location.hostname;
+const pusherPort = Number(import.meta.env?.VITE_PUSHER_PORT || (window.ECHO_CONFIG && window.ECHO_CONFIG.port) || 6001);
+const pusherScheme = import.meta.env?.VITE_PUSHER_SCHEME || (window.ECHO_CONFIG && window.ECHO_CONFIG.scheme) || 'http';
+const pusherCluster = import.meta.env?.VITE_PUSHER_APP_CLUSTER || (window.ECHO_CONFIG && window.ECHO_CONFIG.cluster) || 'mt1';
 
 const ACTIVE_WINDOW_MS = 2 * 60 * 1000;
 const POLL_INTERVAL_MS = 5000;

@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>Chat Admin</title>
+  <script>
+    window.ECHO_CONFIG = {
+      key: "{{ env('VITE_PUSHER_APP_KEY', env('PUSHER_APP_KEY', '')) }}",
+      host: "{{ env('VITE_PUSHER_HOST', env('PUSHER_HOST', '127.0.0.1')) }}",
+      port: {{ env('VITE_PUSHER_PORT', env('PUSHER_PORT', 6001)) }},
+      scheme: "{{ env('VITE_PUSHER_SCHEME', env('PUSHER_SCHEME', 'http')) }}",
+      cluster: "{{ env('VITE_PUSHER_APP_CLUSTER', '') }}",
+    };
+  </script>
   @vite(['resources/css/app.css', 'resources/js/admin.js'])
   <style>
     body {
@@ -213,6 +222,17 @@
   <header>Support Chat Admin</header>
   <div class="layout">
     <aside class="sidebar">
+      <div style="padding:16px;border-bottom:1px solid #eaeaea">
+        <form id="invite-form">
+          <label style="display:block;font-size:12px;color:#666;margin-bottom:6px">Generate Invite for Username (optional)</label>
+          <input id="invite-username" name="username" placeholder="username" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;margin-bottom:8px">
+          <div style="display:flex;gap:8px">
+            <input id="invite-days" name="expires_days" type="number" placeholder="Expire days" style="width:120px;padding:8px;border:1px solid #ddd;border-radius:6px">
+            <button id="invite-generate" type="button" style="padding:8px 10px;background:#111;color:#fff;border-radius:6px;border:0">Generate</button>
+          </div>
+          <div id="invite-result" style="margin-top:8px;font-size:13px;word-break:break-all"></div>
+        </form>
+      </div>
       <h2>Conversations</h2>
       <ul class="conversation-list" id="conversation-list"></ul>
     </aside>
@@ -241,5 +261,37 @@
       </form>
     </section>
   </div>
+</div>
+  <script>
+    (function(){
+      const btn = document.getElementById('invite-generate');
+      const result = document.getElementById('invite-result');
+      btn?.addEventListener('click', async function(){
+        result.textContent = 'Generating...';
+        const username = document.getElementById('invite-username').value;
+        const days = document.getElementById('invite-days').value;
+        const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        try {
+          const res = await fetch('/admin/invites', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': token,
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({ username: username || null, expires_days: days || null })
+          });
+          const data = await res.json();
+          if (data.link) {
+            result.innerHTML = 'Invite link: <a href="'+data.link+'" target="_blank">'+data.link+'</a>';
+          } else {
+            result.textContent = JSON.stringify(data);
+          }
+        } catch (err) {
+          result.textContent = 'Error generating invite';
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
