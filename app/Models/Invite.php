@@ -20,4 +20,9 @@ class Invite extends Model
         'used_at',
         'expires_at',
     ];
+
+    protected $casts = [
+        'used_at' => 'datetime',
+        'expires_at' => 'datetime',
+    ];
 }
