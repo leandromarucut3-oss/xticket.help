@@ -401,6 +401,20 @@ font-size:13px;
 transition:border-color 0.2s;
 }
 
+.chatbox-input .attach-btn{
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  border:0;
+  background:#000;
+  color:#fff;
+  font-size:20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
 .chatbox-input input:focus{
 outline:none;
 border-color:#1d9bf0;
@@ -541,8 +555,9 @@ c 2026 X Corp. Help Center
 </div>
 <div class="chatbox-messages" id="chatboxMessages"></div>
 <div class="chatbox-input">
-<input type="text" id="messageInput" placeholder="Type your message...">
-<button id="sendButton">Send</button>
+  <button id="attachBtn" class="attach-btn" aria-label="Attach">+</button>
+  <input type="text" id="messageInput" placeholder="Type your message...">
+  <button id="sendButton">Send</button>
 </div>
 </div>
 
@@ -810,6 +825,16 @@ messageInput.addEventListener('keypress', (e) => {
 });
 
 sendButton.addEventListener('click', sendMessage);
+
+// Attach button: focus the input for now (can open upload options later)
+const attachBtn = document.getElementById('attachBtn');
+if (attachBtn) {
+  attachBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    messageInput.focus();
+    // future: open upload / saved replies menu
+  });
+}
 
 // Escape HTML
 function escapeHtml(text) {
