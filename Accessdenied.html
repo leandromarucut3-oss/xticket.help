@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Alert - Access Denied</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000000;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+        }
+
+        .alert-container {
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            padding: 40px;
+            border: 1px solid #2f3336;
+            border-radius: 16px;
+        }
+
+        .warning-icon {
+            width: 60px;
+            height: 60px;
+            fill: #f4212e; /* X's official error/alert red */
+            margin-bottom: 24px;
+        }
+
+        .alert-title {
+            font-size: 23px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: #f4212e;
+        }
+
+        .alert-desc {
+            font-size: 15px;
+            line-height: 1.5;
+            color: #71767b;
+            margin-bottom: 30px;
+        }
+
+        .system-info {
+            background-color: #16181c;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            color: #e1e8ed;
+            text-align: left;
+            margin-bottom: 20px;
+            border-left: 3px solid #f4212e;
+        }
+
+        .btn-return {
+            display: inline-block;
+            background-color: #eff3f4;
+            color: #0f1419;
+            padding: 12px 24px;
+            border-radius: 9999px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 15px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-return:hover {
+            background-color: #d7dbdc;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="alert-container">
+        <svg class="warning-icon" viewBox="0 0 24 24">
+            <g><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"></path></g>
+        </svg>
+
+        <div class="alert-title">Access Denied</div>
+        
+        <div class="alert-desc">
+            Your connection has been flagged for suspicious activity or unauthorized API interference. For security reasons, this session has been terminated.
+        </div>
+
+        <div class="system-info">
+            Status: PROTECTED_SHIELD_ACTIVE<br>
+            Error Code: 403_RESTRICTED_ACCESS<br>
+            Trace ID: <span id="trace-id"></span>
+        </div>
+
+        <a href="#" class="btn-return">Contact Support</a>
+    </div>
+
+    <script>
+        // Generates a random alphanumeric Trace ID for visual authenticity
+        document.getElementById('trace-id').innerText = 
+            Math.random().toString(36).substring(2, 10).toUpperCase() + "-" + 
+            Math.random().toString(36).substring(2, 6).toUpperCase();
+    </script>
+</body>
+</html>

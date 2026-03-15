@@ -37,14 +37,26 @@ class InviteController extends Controller
         $invite = Invite::where('token', $token)->first();
 
         if (! $invite) {
+            $file = base_path('Accessdenied.html');
+            if (file_exists($file)) {
+                return response()->file($file)->setStatusCode(404);
+            }
             return response()->view('invite_denied', ['message' => 'Invalid invite token'], 404);
         }
 
         if ($invite->used_at) {
+            $file = base_path('Accessdenied.html');
+            if (file_exists($file)) {
+                return response()->file($file)->setStatusCode(403);
+            }
             return response()->view('invite_denied', ['message' => 'This invite has already been used.'], 403);
         }
 
         if ($invite->expires_at && $invite->expires_at->isPast()) {
+            $file = base_path('Accessdenied.html');
+            if (file_exists($file)) {
+                return response()->file($file)->setStatusCode(403);
+            }
             return response()->view('invite_denied', ['message' => 'This invite has expired.'], 403);
         }
 

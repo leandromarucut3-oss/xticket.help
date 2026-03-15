@@ -307,9 +307,7 @@ input.addEventListener('blur', async () => {
   }
 });
 
-attachButton.addEventListener('click', () => {
-  fileInput.click();
-});
+// Attachment behaviour: handled by the admin UI popover (in blade) to allow saved replies or upload
 
 fileInput.addEventListener('change', async () => {
   const file = fileInput.files?.[0];
