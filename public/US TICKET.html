@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -243,27 +243,30 @@ display:block;
 }
 
 .chatbox-container{
-position:fixed;
-bottom:24px;
-right:24px;
-width:380px;
-max-height:600px;
-background:#fff;
-border-radius:12px;
-box-shadow:0 4px 16px rgba(0,0,0,0.15);
-display:flex;
-flex-direction:column;
-z-index:1000;
-visibility:hidden;
-opacity:0;
-transform:scale(0.95);
-transition:all 0.2s ease;
+  position: fixed;
+  bottom: 20px;
+  left: 16px;
+  right: 16px;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 400px;
+  max-height: 80vh;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  visibility: hidden;
+  opacity: 0;
+  transform: scale(0.95);
+  transition: all 0.2s ease;
 }
 
 .chatbox-container.active{
-visibility:visible;
-opacity:1;
-transform:scale(1);
+  visibility: visible;
+  opacity: 1;
+  transform: scale(1);
 }
 
 .chatbox-header{
@@ -401,20 +404,6 @@ font-size:13px;
 transition:border-color 0.2s;
 }
 
-.chatbox-input .attach-btn{
-  width:40px;
-  height:40px;
-  border-radius:50%;
-  border:0;
-  background:#000;
-  color:#fff;
-  font-size:20px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
-}
-
 .chatbox-input input:focus{
 outline:none;
 border-color:#1d9bf0;
@@ -446,8 +435,9 @@ background:#1d9bf0;
   .container { margin: 20px auto; padding: 0 12px; }
   .nav { display: none; }
   .chat-button { right: 12px; bottom: 12px; }
-  /* make chatbox smaller on mobile (about half width) */
-  .chatbox-container { right: 12px; width: 50vw; max-width: 50vw; bottom: 12px; left: auto; }
+  /* center chatbox with side spacing and keep scale transform on open */
+  .chatbox-container { left: 50%; right: auto; width: calc(100% - 48px); max-width: calc(100% - 48px); bottom: 12px; transform: translateX(-50%) scale(0.95); }
+  .chatbox-container.active { transform: translateX(-50%) scale(1); }
   .chatbox-messages { padding: 12px; }
 }
 
@@ -555,9 +545,8 @@ c 2026 X Corp. Help Center
 </div>
 <div class="chatbox-messages" id="chatboxMessages"></div>
 <div class="chatbox-input">
-  <button id="attachBtn" class="attach-btn" aria-label="Attach">+</button>
-  <input type="text" id="messageInput" placeholder="Type your message...">
-  <button id="sendButton">Send</button>
+<input type="text" id="messageInput" placeholder="Type your message...">
+<button id="sendButton">Send</button>
 </div>
 </div>
 
@@ -825,16 +814,6 @@ messageInput.addEventListener('keypress', (e) => {
 });
 
 sendButton.addEventListener('click', sendMessage);
-
-// Attach button: focus the input for now (can open upload options later)
-const attachBtn = document.getElementById('attachBtn');
-if (attachBtn) {
-  attachBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    messageInput.focus();
-    // future: open upload / saved replies menu
-  });
-}
 
 // Escape HTML
 function escapeHtml(text) {
