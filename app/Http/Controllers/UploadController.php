@@ -22,7 +22,7 @@ class UploadController extends Controller
         ]);
 
         $file = $request->file('file');
-        $disk = config('filesystems.default', 's3');
+        $disk = 'public'; // Use public disk so files are web-accessible
         $path = $file->store('chat', [
             'disk' => $disk,
             'visibility' => 'public',

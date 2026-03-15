@@ -302,7 +302,7 @@ if (echo) {
           fileName: event.fileName,
           fileMime: event.fileMime,
         }, event.senderRole === 'admin' ? 'admin' : 'user');
-        lastMessageId = Math.max(lastMessageId, 0); // Update to ensure polling doesn't re-add
+        lastMessageId = Math.max(lastMessageId, event.id || 0);
       }
     })
     .listen('typing.updated', (event) => {
