@@ -25,6 +25,9 @@
       display: flex;
       flex-direction: column;
     }
+
+    /* Prevent horizontal scroll on small devices */
+    html, body { max-width: 100%; overflow-x: hidden; }
     header {
       padding: 16px 24px;
       background: #111111;
@@ -36,6 +39,12 @@
       display: grid;
       grid-template-columns: 280px 1fr;
       min-height: 0;
+    }
+
+    @media (max-width: 600px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .chat-panel { padding: 0; }
     }
     .sidebar {
       background: #ffffff;

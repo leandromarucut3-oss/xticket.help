@@ -23,6 +23,9 @@ color:#0f1419;
 line-height: 1.5;
 }
 
+/* Prevent horizontal scroll on small devices */
+html, body { max-width: 100%; overflow-x: hidden; }
+
 /* HEADER */
 
 .header{
@@ -422,6 +425,15 @@ background:#1a8cd8;
 
 .chatbox-input button:active{
 background:#1d9bf0;
+}
+
+/* Responsive: prevent overflow and make chatbox fit small screens */
+@media (max-width: 520px) {
+  .container { margin: 20px auto; padding: 0 12px; }
+  .nav { display: none; }
+  .chat-button { right: 12px; bottom: 12px; }
+  .chatbox-container { left: 12px; right: 12px; width: auto; max-width: calc(100% - 24px); bottom: 12px; }
+  .chatbox-messages { padding: 12px; }
 }
 
 </style>
