@@ -62,7 +62,8 @@ function renderConversationItem(conversation) {
   const status = getConversationStatus(conversation);
   const item = document.createElement('li');
   item.dataset.conversationId = conversation.id;
-  item.innerHTML = `<span>${conversation.id}</span><span class="status status--${status}">${status}</span>`;
+  const label = conversation.username && conversation.username.trim() !== '' ? conversation.username : conversation.id;
+  item.innerHTML = `<span>${label}</span><span class="status status--${status}">${status}</span>`;
   item.addEventListener('click', () => selectConversation(conversation.id));
   return item;
 }

@@ -19,7 +19,7 @@ class ChatController extends Controller
             ->withCount('messages')
             ->orderByDesc('updated_at')
             ->limit(200)
-            ->get(['id', 'created_at', 'updated_at']);
+            ->get(['id', 'username', 'created_at', 'updated_at']);
 
         return response()->json($conversations);
     }
@@ -28,6 +28,7 @@ class ChatController extends Controller
     {
         $conversation = Conversation::create([
             'id' => (string) Str::uuid(),
+            'username' => session('invite_username') ?? null,
         ]);
 
         return response()->json([

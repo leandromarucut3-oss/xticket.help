@@ -12,6 +12,7 @@ class Conversation extends Model
 
     protected $fillable = [
         'id',
+        'username',
     ];
 
     public function messages(): HasMany
