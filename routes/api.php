@@ -4,14 +4,15 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\UploadController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['api', 'web'])->group(function () {
-	Route::post('/conversations', [ChatController::class, 'storeConversation']);
-	Route::get('/conversations', [ChatController::class, 'index']);
-	Route::get('/conversations/{conversationId}/messages', [ChatController::class, 'messages']);
-	Route::post('/conversations/{conversationId}/messages', [ChatController::class, 'storeMessage']);
-	Route::post('/conversations/{conversationId}/typing', [ChatController::class, 'typing']);
+// Only 'api' middleware — NO 'web' here
+Route::middleware('api')->group(function () {
+    Route::post('/conversations', [ChatController::class, 'storeConversation']);
+    Route::get('/conversations', [ChatController::class, 'index']);
+    Route::get('/conversations/{conversationId}/messages', [ChatController::class, 'messages']);
+    Route::post('/conversations/{conversationId}/messages', [ChatController::class, 'storeMessage']);
+    Route::post('/conversations/{conversationId}/typing', [ChatController::class, 'typing']);
 });
 
 Route::middleware('api')->group(function () {
-	Route::post('/uploads', [UploadController::class, 'store']);
+    Route::post('/uploads', [UploadController::class, 'store']);
 });
