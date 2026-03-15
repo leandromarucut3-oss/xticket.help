@@ -53,3 +53,8 @@ Route::get('/admin', function () {
 Route::post('/admin/invites', [\App\Http\Controllers\InviteController::class, 'store']);
 Route::get('/invite/{token}', [\App\Http\Controllers\InviteController::class, 'showClaimForm']);
 Route::post('/invite/claim', [\App\Http\Controllers\InviteController::class, 'claim']);
+
+// Saved replies
+Route::get('/admin/saved-replies', [\App\Http\Controllers\SavedReplyController::class, 'index']);
+Route::post('/admin/saved-replies', [\App\Http\Controllers\SavedReplyController::class, 'store']);
+Route::delete('/admin/saved-replies/{id}', [\App\Http\Controllers\SavedReplyController::class, 'destroy']);

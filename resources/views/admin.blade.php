@@ -232,6 +232,14 @@
           </div>
           <div id="invite-result" style="margin-top:8px;font-size:13px;word-break:break-all"></div>
         </form>
+        <div style="margin-top:12px">
+          <label style="display:block;font-size:12px;color:#666;margin-bottom:6px">Saved Reply</label>
+          <div style="display:flex;gap:8px">
+            <input id="saved-reply-text" placeholder="Type a saved reply" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:6px">
+            <button id="saved-reply-add" type="button" style="padding:8px 10px;background:#0b74de;color:#fff;border-radius:6px;border:0">Add</button>
+          </div>
+          <div id="saved-replies" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px"></div>
+        </div>
       </div>
       <h2>Conversations</h2>
       <ul class="conversation-list" id="conversation-list"></ul>
@@ -291,6 +299,78 @@
           result.textContent = 'Error generating invite';
         }
       });
+    })();
+  </script>
+  <script>
+    (function(){
+      const addBtn = document.getElementById('saved-reply-add');
+      const input = document.getElementById('saved-reply-text');
+      const container = document.getElementById('saved-replies');
+      const chatInput = document.getElementById('chat-text');
+      const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+      async function fetchReplies(){
+        try {
+          const res = await fetch('/admin/saved-replies');
+          const list = await res.json();
+          renderList(list);
+        } catch (e) {
+          console.error('failed to load replies', e);
+        }
+      }
+
+      function renderList(list){
+        container.innerHTML = '';
+        list.forEach(item => {
+          const el = document.createElement('button');
+          el.type = 'button';
+          el.className = 'saved-reply-bubble';
+          el.textContent = item.text.length > 60 ? item.text.slice(0,60) + '…' : item.text;
+          el.title = item.text;
+          el.style.padding = '8px 10px';
+          el.style.borderRadius = '18px';
+          el.style.border = '1px solid #e0e0e0';
+          el.style.background = '#fff';
+          el.style.cursor = 'pointer';
+          el.addEventListener('click', () => {
+            if (chatInput) {
+              chatInput.value = item.text;
+              chatInput.disabled = false;
+              const sendBtn = chatInput.nextElementSibling;
+              if (sendBtn && sendBtn.tagName === 'BUTTON') sendBtn.disabled = false;
+              chatInput.focus();
+            }
+          });
+          container.appendChild(el);
+        });
+      }
+
+      addBtn?.addEventListener('click', async function(){
+        const text = input.value.trim();
+        if (!text) return;
+        addBtn.disabled = true;
+        try {
+          const res = await fetch('/admin/saved-replies', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': csrf,
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({ text })
+          });
+          if (res.ok) {
+            input.value = '';
+            await fetchReplies();
+          }
+        } catch (e) {
+          console.error('error creating reply', e);
+        } finally {
+          addBtn.disabled = false;
+        }
+      });
+
+      fetchReplies();
     })();
   </script>
 </body>
