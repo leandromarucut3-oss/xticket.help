@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X Security Verification</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000000;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        .loader-container {
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        /* The Logo Placeholder */
+        .logo {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 40px;
+            fill: #ffffff;
+        }
+
+        .status-text {
+            font-size: 19px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .sub-text {
+            font-size: 15px;
+            color: #71767b;
+            margin-bottom: 30px;
+        }
+
+        /* Professional Progress Bar */
+        .progress-track {
+            width: 100%;
+            height: 2px;
+            background-color: #2f3336;
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            width: 30%;
+            height: 100%;
+            background-color: #1d9bf0;
+            border-radius: 2px;
+            position: absolute;
+            animation: loading 2s infinite ease-in-out;
+        }
+
+        @keyframes loading {
+            0% { left: -30%; width: 30%; }
+            50% { left: 40%; width: 50%; }
+            100% { left: 100%; width: 30%; }
+        }
+
+        /* Subtle Fade In for Text */
+        .fade-in {
+            animation: fadeIn 0.8s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="loader-container fade-in">
+        <svg class="logo" viewBox="0 0 24 24">
+            <g><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></g>
+        </svg>
+
+        <div class="status-text">Securing connection...</div>
+        <div class="sub-text">Verifying your browser and account integrity.</div>
+
+        <div class="progress-track">
+            <div class="progress-bar"></div>
+        </div>
+    </div>
+
+    <script>
+        // Optional: Redirect or change state after a delay
+        setTimeout(() => {
+            // Document.location.href = "next_step.html";
+            console.log("Security handshake complete.");
+        }, 5000);
+    </script>
+</body>
+</html>

@@ -232,14 +232,6 @@
           </div>
           <div id="invite-result" style="margin-top:8px;font-size:13px;word-break:break-all"></div>
         </form>
-        <div style="margin-top:12px">
-          <label style="display:block;font-size:12px;color:#666;margin-bottom:6px">Saved Reply</label>
-          <div style="display:flex;gap:8px">
-            <input id="saved-reply-text" placeholder="Type a saved reply" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:6px">
-            <button id="saved-reply-add" type="button" style="padding:8px 10px;background:#0b74de;color:#fff;border-radius:6px;border:0">Add</button>
-          </div>
-          <div id="saved-replies" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px"></div>
-        </div>
       </div>
       <h2>Conversations</h2>
       <ul class="conversation-list" id="conversation-list"></ul>
@@ -303,36 +295,69 @@
   </script>
   <script>
     (function(){
-      const addBtn = document.getElementById('saved-reply-add');
-      const input = document.getElementById('saved-reply-text');
-      const container = document.getElementById('saved-replies');
+      const attachBtn = document.getElementById('chat-attach');
       const chatInput = document.getElementById('chat-text');
+      const fileInput = document.getElementById('chat-file');
       const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+      // create popover
+      const pop = document.createElement('div');
+      pop.id = 'add-popover';
+      pop.style.position = 'absolute';
+      pop.style.minWidth = '280px';
+      pop.style.background = '#fff';
+      pop.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
+      pop.style.borderRadius = '8px';
+      pop.style.padding = '10px';
+      pop.style.display = 'none';
+      pop.style.zIndex = '2000';
+      pop.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button id="popover-upload" type="button" style="padding:10px;border-radius:6px;border:0;background:#fff;text-align:left">📤 Upload image</button>
+          <div style="border-top:1px solid #eee;padding-top:8px">
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+              <input id="popover-saved-input" placeholder="Add saved reply" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:6px">
+              <button id="popover-saved-add" type="button" style="padding:8px 10px;background:#0b74de;color:#fff;border-radius:6px;border:0">Add</button>
+            </div>
+            <div id="popover-saved-list" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow:auto"></div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(pop);
+
+      function positionPopover(){
+        const rect = attachBtn.getBoundingClientRect();
+        // position above the button if possible
+        const left = window.scrollX + rect.left;
+        let top = window.scrollY + rect.top - pop.offsetHeight - 8;
+        if (top < 8) top = window.scrollY + rect.bottom + 8;
+        pop.style.left = left + 'px';
+        pop.style.top = top + 'px';
+      }
 
       async function fetchReplies(){
         try {
           const res = await fetch('/admin/saved-replies');
-          const list = await res.json();
-          renderList(list);
-        } catch (e) {
-          console.error('failed to load replies', e);
-        }
+          if (!res.ok) return [];
+          return await res.json();
+        } catch (e) { return []; }
       }
 
-      function renderList(list){
-        container.innerHTML = '';
+      function renderSaved(list){
+        const listEl = document.getElementById('popover-saved-list');
+        listEl.innerHTML = '';
         list.forEach(item => {
-          const el = document.createElement('button');
-          el.type = 'button';
-          el.className = 'saved-reply-bubble';
-          el.textContent = item.text.length > 60 ? item.text.slice(0,60) + '…' : item.text;
-          el.title = item.text;
-          el.style.padding = '8px 10px';
-          el.style.borderRadius = '18px';
-          el.style.border = '1px solid #e0e0e0';
-          el.style.background = '#fff';
-          el.style.cursor = 'pointer';
-          el.addEventListener('click', () => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.style.padding = '8px';
+          b.style.border = '0';
+          b.style.textAlign = 'left';
+          b.style.background = '#f9f9fb';
+          b.style.borderRadius = '6px';
+          b.style.cursor = 'pointer';
+          b.textContent = item.text;
+          b.title = item.text;
+          b.addEventListener('click', ()=>{
             if (chatInput) {
               chatInput.value = item.text;
               chatInput.disabled = false;
@@ -340,37 +365,60 @@
               if (sendBtn && sendBtn.tagName === 'BUTTON') sendBtn.disabled = false;
               chatInput.focus();
             }
+            pop.style.display = 'none';
           });
-          container.appendChild(el);
+          listEl.appendChild(b);
         });
       }
 
-      addBtn?.addEventListener('click', async function(){
-        const text = input.value.trim();
-        if (!text) return;
-        addBtn.disabled = true;
-        try {
-          const res = await fetch('/admin/saved-replies', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRF-TOKEN': csrf,
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify({ text })
-          });
-          if (res.ok) {
-            input.value = '';
-            await fetchReplies();
-          }
-        } catch (e) {
-          console.error('error creating reply', e);
-        } finally {
-          addBtn.disabled = false;
+      attachBtn.addEventListener('click', async (e) => {
+        if (pop.style.display === 'block') { pop.style.display = 'none'; return; }
+        pop.style.display = 'block';
+        positionPopover();
+        const list = await fetchReplies();
+        renderSaved(list);
+      });
+
+      window.addEventListener('resize', ()=>{ if (pop.style.display === 'block') positionPopover(); });
+
+      document.addEventListener('click', (ev)=>{
+        if (!pop.contains(ev.target) && ev.target !== attachBtn) pop.style.display = 'none';
+      });
+
+      // upload image
+      document.addEventListener('click', function(ev){
+        if (ev.target && ev.target.id === 'popover-upload'){
+          fileInput.click();
+          pop.style.display = 'none';
         }
       });
 
-      fetchReplies();
+      // add saved reply
+      document.addEventListener('click', async function(ev){
+        if (ev.target && ev.target.id === 'popover-saved-add'){
+          const input = document.getElementById('popover-saved-input');
+          const text = input.value.trim();
+          if (!text) return;
+          const btn = ev.target;
+          btn.disabled = true;
+          try {
+            const res = await fetch('/admin/saved-replies', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrf,
+                'Accept': 'application/json'
+              },
+              body: JSON.stringify({ text })
+            });
+            if (res.ok) {
+              input.value = '';
+              const list = await fetchReplies();
+              renderSaved(list);
+            }
+          } finally { btn.disabled = false; }
+        }
+      });
     })();
   </script>
 </body>

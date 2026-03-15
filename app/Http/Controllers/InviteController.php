@@ -33,6 +33,7 @@ class InviteController extends Controller
     // Show claim form for the invite token
     public function showClaimForm($token)
     {
+        // Auto-accept the invite: validate token, mark used, and redirect to site
         $invite = Invite::where('token', $token)->first();
 
         if (! $invite) {
@@ -47,7 +48,14 @@ class InviteController extends Controller
             return response()->view('invite_denied', ['message' => 'This invite has expired.'], 403);
         }
 
-        return view('invite_claim', ['token' => $token, 'username' => $invite->username]);
+        // mark used immediately and set session so user can access the site
+        $invite->used_at = now();
+        $invite->save();
+
+        session(['invite_token' => $invite->token, 'invite_username' => $invite->username]);
+
+        // Show a short wait/splash page then redirect to the site
+        return view('invite_wait', ['redirect' => url('/'), 'seconds' => 3]);
     }
 
     // Claim (bind) the invite to a visitor session
