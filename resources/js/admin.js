@@ -21,7 +21,10 @@ let isTyping = false;
 let channel = null;
 
 const pusherKey = import.meta.env?.VITE_PUSHER_APP_KEY || (window.ECHO_CONFIG && window.ECHO_CONFIG.key) || '';
-const pusherHost = import.meta.env?.VITE_PUSHER_HOST || (window.ECHO_CONFIG && window.ECHO_CONFIG.host) || window.location.hostname;
+let pusherHost = import.meta.env?.VITE_PUSHER_HOST || (window.ECHO_CONFIG && window.ECHO_CONFIG.host) || '';
+if (!pusherHost || pusherHost === '127.0.0.1' || pusherHost === 'localhost') {
+  pusherHost = window.location.hostname;
+}
 const pusherPort = Number(import.meta.env?.VITE_PUSHER_PORT || (window.ECHO_CONFIG && window.ECHO_CONFIG.port) || 6001);
 const pusherScheme = import.meta.env?.VITE_PUSHER_SCHEME || (window.ECHO_CONFIG && window.ECHO_CONFIG.scheme) || 'http';
 const pusherCluster = import.meta.env?.VITE_PUSHER_APP_CLUSTER || (window.ECHO_CONFIG && window.ECHO_CONFIG.cluster) || 'mt1';
@@ -146,6 +149,9 @@ function setTyping(isVisible) {
   typingEl.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
 }
 
+let lastMessageId = 0;
+let messagePollingTimer = null;
+
 async function loadMessages() {
   if (!activeConversation) {
     return;
@@ -163,7 +169,9 @@ async function loadMessages() {
       fileName: message.file_name,
       fileMime: message.file_mime,
     }, message.sender_role === 'admin' ? 'admin' : 'user');
+    lastMessageId = Math.max(lastMessageId, message.id || 0);
   });
+  console.log(`Loaded ${messages.length} messages. Last message ID: ${lastMessageId}`);
   if (!messages.length && emptyRow) {
     emptyRow.style.display = 'block';
     messagesEl.appendChild(emptyRow);
@@ -172,6 +180,32 @@ async function loadMessages() {
   }
   if (typingRow) {
     messagesEl.appendChild(typingRow);
+  }
+}
+
+async function pollForNewMessages() {
+  if (!activeConversation) {
+    return;
+  }
+  try {
+    const response = await fetch(`/api/conversations/${activeConversation}/messages`);
+    const messages = await response.json();
+    const newMessages = messages.filter((msg) => (msg.id || 0) > lastMessageId);
+    newMessages.forEach((message) => {
+      addMessage({
+        messageType: message.message_type,
+        text: message.text,
+        fileUrl: message.file_url,
+        fileName: message.file_name,
+        fileMime: message.file_mime,
+      }, message.sender_role === 'admin' ? 'admin' : 'user');
+      lastMessageId = Math.max(lastMessageId, message.id || 0);
+    });
+    if (newMessages.length > 0) {
+      console.log(`Polled ${newMessages.length} new messages for conversation ${activeConversation}`);
+    }
+  } catch (error) {
+    console.error('Error polling for messages:', error);
   }
 }
 
@@ -186,6 +220,8 @@ function selectConversation(conversationId) {
     item.classList.toggle('active', item.dataset.conversationId === conversationId);
   });
   setTyping(false);
+  lastMessageId = 0; // Reset message ID for this conversation
+
   if (channel) {
     channel.stopListening('.message.sent');
     channel.stopListening('.typing.updated');
@@ -213,6 +249,12 @@ function selectConversation(conversationId) {
       });
   }
   loadMessages();
+
+  // Start polling for this conversation as backup
+  if (messagePollingTimer) {
+    clearInterval(messagePollingTimer);
+  }
+  messagePollingTimer = setInterval(pollForNewMessages, POLL_INTERVAL_MS);
 }
 
 async function sendTyping(isTypingValue) {
@@ -250,11 +292,27 @@ if (echo) {
       console.log('✓ New message broadcast received on admin channel:', event);
       markConversationOnline(event.conversationId || event.conversation_id);
       console.log('Marked conversation online:', event.conversationId || event.conversation_id);
+
+      // If the admin is viewing this conversation, add the message immediately
+      if (activeConversation === (event.conversationId || event.conversation_id)) {
+        addMessage({
+          messageType: event.messageType,
+          text: event.text,
+          fileUrl: event.fileUrl,
+          fileName: event.fileName,
+          fileMime: event.fileMime,
+        }, event.senderRole === 'admin' ? 'admin' : 'user');
+        lastMessageId = Math.max(lastMessageId, 0); // Update to ensure polling doesn't re-add
+      }
     })
     .listen('typing.updated', (event) => {
       console.log('Typing update on admin channel:', event);
       if (event.senderRole === 'user') {
         markConversationOnline(event.conversationId);
+        // If viewing this conversation, update typing indicator
+        if (activeConversation === event.conversationId && event.isTyping) {
+          setTyping(true);
+        }
       }
     });
 } else {
