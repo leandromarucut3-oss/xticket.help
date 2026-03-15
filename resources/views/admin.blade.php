@@ -1,29 +1,3 @@
-    .chatbox-container{
-      position: fixed;
-      bottom: 20px;
-      left: 16px;
-      right: 16px;
-      margin: 0 auto;
-      width: 100%;
-      max-width: 400px;
-      max-height: 80vh;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-      display: flex;
-      flex-direction: column;
-      z-index: 1000;
-      visibility: hidden;
-      opacity: 0;
-      transform: scale(0.95);
-      transition: all 0.2s ease;
-    }
-
-    .chatbox-container.active{
-      visibility: visible;
-      opacity: 1;
-      transform: scale(1);
-    }
 <!DOCTYPE html>
 <html lang="en">
 <head>
