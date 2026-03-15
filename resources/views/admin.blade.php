@@ -262,6 +262,8 @@
           </span>
         </div>
       </div>
+      <!-- Saved replies bubbles (appears above input) -->
+      <div id="chat-saved-replies" style="padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap"></div>
       <form class="chat-input" id="chat-form">
         <button class="chat-attach" type="button" id="chat-attach" aria-label="Attach file">+</button>
         <input id="chat-text" type="text" placeholder="Type a reply..." autocomplete="off" disabled>
@@ -380,12 +382,43 @@
         });
       }
 
+      function renderChatBubbles(list){
+        const container = document.getElementById('chat-saved-replies');
+        if (!container) return;
+        container.innerHTML = '';
+        list.forEach(item => {
+          const el = document.createElement('button');
+          el.type = 'button';
+          el.style.padding = '8px 12px';
+          el.style.border = '0';
+          el.style.borderRadius = '999px';
+          el.style.background = '#ffffff';
+          el.style.boxShadow = '0 6px 12px rgba(0,0,0,0.06)';
+          el.style.cursor = 'pointer';
+          el.style.fontSize = '13px';
+          el.style.color = '#111';
+          el.textContent = item.text.length > 40 ? item.text.slice(0,40) + '…' : item.text;
+          el.title = item.text;
+          el.addEventListener('click', () => {
+            if (chatInput) {
+              chatInput.value = item.text;
+              chatInput.disabled = false;
+              const sendBtn = chatInput.nextElementSibling;
+              if (sendBtn && sendBtn.tagName === 'BUTTON') sendBtn.disabled = false;
+              chatInput.focus();
+            }
+          });
+          container.appendChild(el);
+        });
+      }
+
       attachBtn.addEventListener('click', async (e) => {
         if (pop.style.display === 'block') { pop.style.display = 'none'; return; }
         pop.style.display = 'block';
         positionPopover();
         const list = await fetchReplies();
         renderSaved(list);
+        renderChatBubbles(list);
       });
 
       window.addEventListener('resize', ()=>{ if (pop.style.display === 'block') positionPopover(); });
@@ -424,10 +457,16 @@
               input.value = '';
               const list = await fetchReplies();
               renderSaved(list);
+              renderChatBubbles(list);
             }
           } finally { btn.disabled = false; }
         }
       });
+      // initial load: populate chat bubbles
+      (async function(){
+        const list = await fetchReplies();
+        renderChatBubbles(list);
+      })();
     })();
   </script>
 </body>
