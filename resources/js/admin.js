@@ -151,9 +151,45 @@ function setTyping(isVisible) {
   if (isVisible) {
     typingEl.style.display = 'flex';
     typingEl.setAttribute('aria-hidden', 'false');
+    // Update status indicator
+    if (statusEl) {
+      statusEl.textContent = '✏️ typing...';
+      statusEl.style.color = '#0b74de';
+      statusEl.style.fontWeight = '600';
+    }
+    // Update conversation list status
+    if (activeConversation) {
+      const item = listEl.querySelector(`[data-conversation-id="${activeConversation}"]`);
+      if (item) {
+        const status = item.querySelector('.status');
+        if (status) {
+          status.textContent = '✏️ typing';
+          status.className = 'status status--typing';
+        }
+      }
+    }
+    console.log('👤 User is typing...');
   } else {
     typingEl.style.display = 'none';
     typingEl.setAttribute('aria-hidden', 'true');
+    // Restore status indicator
+    if (statusEl) {
+      statusEl.textContent = 'active';
+      statusEl.style.color = '';
+      statusEl.style.fontWeight = '';
+    }
+    // Update conversation list status
+    if (activeConversation) {
+      const item = listEl.querySelector(`[data-conversation-id="${activeConversation}"]`);
+      if (item) {
+        const status = item.querySelector('.status');
+        if (status) {
+          status.textContent = 'active';
+          status.className = 'status status--online';
+        }
+      }
+    }
+    console.log('👤 User stopped typing');
   }
   // Scroll to bottom when typing indicator appears
   if (isVisible) {

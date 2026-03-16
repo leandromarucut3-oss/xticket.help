@@ -96,12 +96,14 @@
       display: none;
       align-items: center;
       gap: 6px;
-      padding: 8px 12px;
+      padding: 10px 12px;
       border-radius: 12px;
-      background: #f2f2f2;
-      font-size: 12px;
-      color: #666666;
+      background: #f0f0f0;
+      border: 2px solid #111111;
+      font-size: 13px;
+      color: #111111;
       width: fit-content;
+      font-weight: 500;
     }
     .chat-typing.visible {
       display: flex;
@@ -112,10 +114,10 @@
       align-items: center;
     }
     .typing-dots span {
-      width: 6px;
-      height: 6px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-      background: #777777;
+      background: #111111;
       display: inline-block;
       animation: chat-typing 1.2s infinite ease-in-out;
     }

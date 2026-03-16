@@ -328,6 +328,7 @@ function registerChannel() {
     })
     .listen('typing.updated', (event) => {
       if (event.senderRole === 'admin') {
+        console.log('📝 Admin typing event received:', event.isTyping);
         setTyping(!!event.isTyping);
       }
     });

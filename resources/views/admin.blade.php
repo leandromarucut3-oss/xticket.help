@@ -101,6 +101,16 @@
       background: #f0f0f0;
       color: #444444;
     }
+    .conversation-list li .status--typing {
+      background: #dbeafe;
+      color: #0b74de;
+      font-weight: 600;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
     .conversation-list li.active .status {
       background: #ffffff;
       color: #111111;
@@ -167,20 +177,23 @@
       max-width: 70%;
       padding: 10px 12px;
       border-radius: 12px;
-      background: #ffffff;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-      font-size: 12px;
-      color: #666666;
+      background: #f0f0f0;
+      border: 2px solid #0b74de;
+      box-shadow: 0 4px 12px rgba(11, 116, 222, 0.2);
+      font-size: 13px;
+      color: #0b74de;
+      font-weight: 500;
     }
     .typing-dots {
       display: inline-flex;
       gap: 4px;
+      align-items: center;
     }
     .typing-dots span {
-      width: 6px;
-      height: 6px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-      background: #777777;
+      background: #0b74de;
       display: inline-block;
       animation: admin-typing 1.2s infinite ease-in-out;
     }
