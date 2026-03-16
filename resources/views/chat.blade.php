@@ -61,6 +61,22 @@
       border-radius: 10px;
       display: block;
     }
+    .chat-connecting {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #f0f4ff 0%, #f9fafb 100%);
+      border-radius: 4px;
+      color: #4b5563;
+      font-size: 13px;
+      font-weight: 500;
+      margin: 8px 0;
+      border: 1px solid #e5e7eb;
+    }
+    .chat-connecting.visible {
+      display: flex;
+    }
     .chat-typing {
       display: none;
       align-items: center;
@@ -72,9 +88,13 @@
       color: #666666;
       width: fit-content;
     }
+    .chat-typing.visible {
+      display: flex;
+    }
     .typing-dots {
       display: inline-flex;
       gap: 4px;
+      align-items: center;
     }
     .typing-dots span {
       width: 6px;
@@ -140,7 +160,14 @@
   <div class="chat-shell" data-chat-root>
     <div class="chat-header">Chat with Support</div>
     <div class="chat-messages" id="chat-messages">
-      <div class="chat-message">Please wait while we connect you to an agent.</div>
+      <div class="chat-connecting visible" id="chat-connecting" aria-hidden="false">
+        <span>Connecting to an agent</span>
+        <span class="typing-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+      </div>
       <div class="chat-typing" id="chat-typing" aria-hidden="true">Agent is typing
         <span class="typing-dots">
           <span></span>

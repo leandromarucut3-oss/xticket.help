@@ -7,6 +7,7 @@ let chatMessages;
 let chatForm;
 let chatInput;
 let chatTyping;
+let chatConnecting;
 let attachButton;
 let fileInput;
 
@@ -15,14 +16,17 @@ let conversationId = localStorage.getItem(sessionKey);
 let typingTimer = null;
 let isTyping = false;
 let pollTimer = null;
+let connectionTimeout = null;
 
 const POLL_INTERVAL_MS = 5000;
+const CONNECTION_TIMEOUT_MS = 30000;
 
 function initializeDOMElements() {
   chatMessages = document.getElementById('chat-messages');
   chatForm = document.getElementById('chat-form');
   chatInput = document.getElementById('chat-text');
   chatTyping = document.getElementById('chat-typing');
+  chatConnecting = document.getElementById('chat-connecting');
   attachButton = document.getElementById('chat-attach');
   fileInput = document.getElementById('chat-file');
 
@@ -145,6 +149,7 @@ if (window.Echo) {
 }
 
 function appendMessage(payload, role) {
+  hideConnecting(); // Hide connecting indicator when message is received
   const msg = document.createElement('div');
   msg.className = `chat-message ${role}`;
   if (!chatMessages.contains(chatTyping)) {
@@ -236,8 +241,34 @@ function setTyping(isVisible) {
   if (!chatMessages.contains(chatTyping)) {
     chatMessages.appendChild(chatTyping);
   }
-  chatTyping.style.display = isVisible ? 'flex' : 'none';
-  chatTyping.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
+  if (isVisible) {
+    chatTyping.classList.add('visible');
+    chatTyping.setAttribute('aria-hidden', 'false');
+  } else {
+    chatTyping.classList.remove('visible');
+    chatTyping.setAttribute('aria-hidden', 'true');
+  }
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function hideConnecting() {
+  if (chatConnecting) {
+    chatConnecting.classList.remove('visible');
+    chatConnecting.setAttribute('aria-hidden', 'true');
+  }
+  if (connectionTimeout) {
+    clearTimeout(connectionTimeout);
+    connectionTimeout = null;
+  }
+}
+
+function showConnecting() {
+  if (chatConnecting) {
+    chatConnecting.classList.add('visible');
+    chatConnecting.setAttribute('aria-hidden', 'false');
+    // Auto-hide after 30 seconds
+    connectionTimeout = setTimeout(hideConnecting, CONNECTION_TIMEOUT_MS);
+  }
 }
 
 async function sendTyping(isTypingValue) {
@@ -304,7 +335,10 @@ function registerChannel() {
 
 async function init() {
   if (!conversationId) {
+    showConnecting(); // Show "Connecting to agent" indicator
     await createConversation();
+  } else {
+    hideConnecting(); // If conversation exists, hide connecting state
   }
   registerChannel();
   await loadHistory();
