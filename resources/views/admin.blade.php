@@ -144,6 +144,8 @@
       background: #ffffff;
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
       font-size: 14px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
     }
     .chat-message img,
     .chat-message video {
@@ -207,13 +209,27 @@
       display: flex;
       gap: 10px;
       flex-shrink: 0;
+      align-items: flex-end;
     }
-    .chat-input input {
+    .chat-input-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-height: 150px;
+      overflow: hidden;
+    }
+    .chat-input textarea {
       flex: 1;
       padding: 10px 12px;
       border: 1px solid #d0d0d0;
       border-radius: 10px;
       font-size: 14px;
+      font-family: inherit;
+      resize: none;
+      overflow-y: auto;
+      min-height: 40px;
+      max-height: 120px;
+      line-height: 1.4;
     }
     .chat-input button {
       padding: 10px 14px;
@@ -286,7 +302,9 @@
       <div id="chat-saved-replies" style="padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap"></div>
       <form class="chat-input" id="chat-form">
         <button class="chat-attach" type="button" id="chat-attach" aria-label="Attach file">+</button>
-        <input id="chat-text" type="text" placeholder="Type a reply..." autocomplete="off" disabled>
+        <div class="chat-input-wrapper">
+          <textarea id="chat-text" placeholder="Type a reply..." autocomplete="off" disabled></textarea>
+        </div>
         <button type="submit" disabled>Send</button>
         <input id="chat-file" type="file" accept="image/*,video/*" style="display:none">
       </form>
@@ -399,8 +417,13 @@
             if (chatInput) {
               chatInput.value = item.text;
               chatInput.disabled = false;
-              const sendBtn = chatInput.nextElementSibling;
-              if (sendBtn && sendBtn.tagName === 'BUTTON') sendBtn.disabled = false;
+              // Auto-expand textarea to fit content
+              chatInput.style.height = 'auto';
+              const newHeight = Math.min(chatInput.scrollHeight, 120);
+              chatInput.style.height = newHeight + 'px';
+              // Find and enable send button
+              const sendBtn = document.querySelector('#chat-form button[type="submit"]');
+              if (sendBtn) sendBtn.disabled = false;
               chatInput.focus();
             }
             pop.style.display = 'none';
@@ -456,8 +479,13 @@
             if (chatInput) {
               chatInput.value = item.text;
               chatInput.disabled = false;
-              const sendBtn = chatInput.nextElementSibling;
-              if (sendBtn && sendBtn.tagName === 'BUTTON') sendBtn.disabled = false;
+              // Auto-expand textarea to fit content
+              chatInput.style.height = 'auto';
+              const newHeight = Math.min(chatInput.scrollHeight, 120);
+              chatInput.style.height = newHeight + 'px';
+              // Find and enable send button
+              const sendBtn = document.querySelector('#chat-form button[type="submit"]');
+              if (sendBtn) sendBtn.disabled = false;
               chatInput.focus();
             }
           });

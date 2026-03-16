@@ -363,6 +363,7 @@ form.addEventListener('submit', async (event) => {
   addMessage(payload, 'admin');
   await sendMessage(payload);
   input.value = '';
+  input.style.height = 'auto';
   if (isTyping) {
     isTyping = false;
     await sendTyping(false);
@@ -370,6 +371,11 @@ form.addEventListener('submit', async (event) => {
 });
 
 input.addEventListener('input', async () => {
+  // Auto-expand textarea
+  input.style.height = 'auto';
+  const newHeight = Math.min(input.scrollHeight, 120);
+  input.style.height = newHeight + 'px';
+
   if (!isTyping) {
     isTyping = true;
     await sendTyping(true);
