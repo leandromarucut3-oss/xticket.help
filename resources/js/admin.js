@@ -410,8 +410,7 @@ form.addEventListener('submit', async (event) => {
 input.addEventListener('input', async () => {
   // Auto-expand textarea
   input.style.height = 'auto';
-  const newHeight = Math.min(input.scrollHeight, 250);
-  input.style.height = newHeight + 'px';
+  input.style.height = input.scrollHeight + 'px';
 
   if (!isTyping) {
     isTyping = true;
