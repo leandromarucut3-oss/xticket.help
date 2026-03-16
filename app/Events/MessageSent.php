@@ -19,7 +19,7 @@ class MessageSent implements ShouldBroadcast
 
     public function __construct(Message $message)
     {
-        $this->message = $message->load('sender'); // eager load sender relationship
+        $this->message = $message;
     }
 
     public function broadcastOn(): array

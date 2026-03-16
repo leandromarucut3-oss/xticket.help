@@ -396,7 +396,8 @@ form.addEventListener('submit', async (event) => {
     return;
   }
   const payload = { messageType: 'text', text };
-  addMessage(payload, 'admin');
+  // Don't add message locally - let the broadcast event handle it
+  // This prevents duplication
   await sendMessage(payload);
   input.value = '';
   input.style.height = 'auto';
@@ -409,7 +410,7 @@ form.addEventListener('submit', async (event) => {
 input.addEventListener('input', async () => {
   // Auto-expand textarea
   input.style.height = 'auto';
-  const newHeight = Math.min(input.scrollHeight, 120);
+  const newHeight = Math.min(input.scrollHeight, 250);
   input.style.height = newHeight + 'px';
 
   if (!isTyping) {

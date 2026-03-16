@@ -228,8 +228,8 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      max-height: 150px;
-      overflow: hidden;
+      max-height: 300px;
+      overflow: visible;
     }
     .chat-input textarea {
       flex: 1;
@@ -241,7 +241,7 @@
       resize: none;
       overflow-y: auto;
       min-height: 40px;
-      max-height: 120px;
+      max-height: 250px;
       line-height: 1.4;
     }
     .chat-input button {
@@ -432,7 +432,7 @@
               chatInput.disabled = false;
               // Auto-expand textarea to fit content
               chatInput.style.height = 'auto';
-              const newHeight = Math.min(chatInput.scrollHeight, 120);
+              const newHeight = Math.min(chatInput.scrollHeight, 250);
               chatInput.style.height = newHeight + 'px';
               // Find and enable send button
               const sendBtn = document.querySelector('#chat-form button[type="submit"]');
@@ -494,7 +494,7 @@
               chatInput.disabled = false;
               // Auto-expand textarea to fit content
               chatInput.style.height = 'auto';
-              const newHeight = Math.min(chatInput.scrollHeight, 120);
+              const newHeight = Math.min(chatInput.scrollHeight, 250);
               chatInput.style.height = newHeight + 'px';
               // Find and enable send button
               const sendBtn = document.querySelector('#chat-form button[type="submit"]');
