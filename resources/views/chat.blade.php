@@ -73,8 +73,11 @@
     .chat-message img,
     .chat-message video {
       max-width: 100%;
+      max-height: 400px;
       border-radius: 10px;
       display: block;
+      margin-bottom: 8px;
+      object-fit: contain;
     }
     .chat-connecting {
       display: none;
