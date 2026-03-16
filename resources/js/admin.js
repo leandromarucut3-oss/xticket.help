@@ -141,12 +141,26 @@ function addMessage(payload, role) {
   } else {
     messagesEl.appendChild(msg);
   }
-  messagesEl.scrollTop = messagesEl.scrollHeight;
+  // Always scroll to bottom when new message arrives
+  setTimeout(() => {
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }, 0);
 }
 
 function setTyping(isVisible) {
-  typingEl.style.display = isVisible ? 'flex' : 'none';
-  typingEl.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
+  if (isVisible) {
+    typingEl.style.display = 'flex';
+    typingEl.setAttribute('aria-hidden', 'false');
+  } else {
+    typingEl.style.display = 'none';
+    typingEl.setAttribute('aria-hidden', 'true');
+  }
+  // Scroll to bottom when typing indicator appears
+  if (isVisible) {
+    setTimeout(() => {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }, 0);
+  }
 }
 
 let lastMessageId = 0;
@@ -181,6 +195,10 @@ async function loadMessages() {
   if (typingRow) {
     messagesEl.appendChild(typingRow);
   }
+  // Scroll to bottom after messages are rendered
+  setTimeout(() => {
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }, 0);
 }
 
 async function pollForNewMessages() {
