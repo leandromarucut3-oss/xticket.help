@@ -326,9 +326,10 @@
         <div style="display:flex;flex-direction:column;gap:8px">
           <button id="popover-upload" type="button" style="padding:10px;border-radius:6px;border:0;background:#fff;text-align:left">📤 Upload image</button>
           <div style="border-top:1px solid #eee;padding-top:8px">
-            <div style="display:flex;gap:8px;margin-bottom:8px">
-              <input id="popover-saved-input" placeholder="Add saved reply" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:6px">
-              <button id="popover-saved-add" type="button" style="padding:8px 10px;background:#0b74de;color:#fff;border-radius:6px;border:0">Add</button>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px">
+              <input id="popover-saved-title" placeholder="Reply title (e.g. 'Welcome')" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box">
+              <textarea id="popover-saved-text" placeholder="Reply message..." style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;resize:vertical;font-family:inherit;min-height:60px;font-size:13px"></textarea>
+              <button id="popover-saved-add" type="button" style="padding:8px 10px;background:#0b74de;color:#fff;border-radius:6px;border:0;cursor:pointer">Add Reply</button>
             </div>
             <div id="popover-saved-list" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow:auto"></div>
           </div>
@@ -358,6 +359,11 @@
         const listEl = document.getElementById('popover-saved-list');
         listEl.innerHTML = '';
         list.forEach(item => {
+          const container = document.createElement('div');
+          container.style.display = 'flex';
+          container.style.alignItems = 'center';
+          container.style.gap = '8px';
+
           const b = document.createElement('button');
           b.type = 'button';
           b.style.padding = '8px';
@@ -366,7 +372,8 @@
           b.style.background = '#f9f9fb';
           b.style.borderRadius = '6px';
           b.style.cursor = 'pointer';
-          b.textContent = item.text;
+          b.style.flex = '1';
+          b.textContent = item.title || '(No title)';
           b.title = item.text;
           b.addEventListener('click', ()=>{
             if (chatInput) {
@@ -378,7 +385,32 @@
             }
             pop.style.display = 'none';
           });
-          listEl.appendChild(b);
+
+          const delBtn = document.createElement('button');
+          delBtn.type = 'button';
+          delBtn.textContent = '✕';
+          delBtn.style.padding = '4px 8px';
+          delBtn.style.border = '0';
+          delBtn.style.background = '#ff4444';
+          delBtn.style.color = '#fff';
+          delBtn.style.borderRadius = '4px';
+          delBtn.style.cursor = 'pointer';
+          delBtn.style.fontSize = '12px';
+          delBtn.addEventListener('click', async (e)=>{
+            e.stopPropagation();
+            if (confirm('Delete this reply?')) {
+              try {
+                await fetch(`/admin/saved-replies/${item.id}`, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': csrf } });
+                const list = await fetchReplies();
+                renderSaved(list);
+                renderChatBubbles(list);
+              } catch (err) { console.error(err); }
+            }
+          });
+
+          container.appendChild(b);
+          container.appendChild(delBtn);
+          listEl.appendChild(container);
         });
       }
 
@@ -397,7 +429,8 @@
           el.style.cursor = 'pointer';
           el.style.fontSize = '13px';
           el.style.color = '#111';
-          el.textContent = item.text.length > 40 ? item.text.slice(0,40) + '…' : item.text;
+          el.style.fontWeight = '500';
+          el.textContent = item.title || '(No title)';
           el.title = item.text;
           el.addEventListener('click', () => {
             if (chatInput) {
@@ -438,9 +471,14 @@
       // add saved reply
       document.addEventListener('click', async function(ev){
         if (ev.target && ev.target.id === 'popover-saved-add'){
-          const input = document.getElementById('popover-saved-input');
-          const text = input.value.trim();
-          if (!text) return;
+          const titleInput = document.getElementById('popover-saved-title');
+          const textInput = document.getElementById('popover-saved-text');
+          const title = titleInput.value.trim();
+          const text = textInput.value.trim();
+          if (!title || !text) {
+            alert('Please enter both title and message');
+            return;
+          }
           const btn = ev.target;
           btn.disabled = true;
           try {
@@ -451,10 +489,11 @@
                 'X-CSRF-TOKEN': csrf,
                 'Accept': 'application/json'
               },
-              body: JSON.stringify({ text })
+              body: JSON.stringify({ title, text })
             });
             if (res.ok) {
-              input.value = '';
+              titleInput.value = '';
+              textInput.value = '';
               const list = await fetchReplies();
               renderSaved(list);
               renderChatBubbles(list);

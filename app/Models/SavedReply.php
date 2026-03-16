@@ -9,6 +9,7 @@ class SavedReply extends Model
     protected $table = 'saved_replies';
 
     protected $fillable = [
+        'title',
         'text',
         'created_by',
     ];

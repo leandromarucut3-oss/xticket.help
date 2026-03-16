@@ -15,10 +15,12 @@ class SavedReplyController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'title' => ['required', 'string', 'max:100'],
             'text' => ['required', 'string', 'max:2000'],
         ]);
 
         $reply = SavedReply::create([
+            'title' => $request->input('title'),
             'text' => $request->input('text'),
             'created_by' => $request->user()?->email ?? 'admin',
         ]);
