@@ -781,6 +781,24 @@ async function initializeChatbox() {
     conversationId = data.conversationId;
     localStorage.setItem('chatConversationId', conversationId);
     console.log('✓ Created new conversation:', conversationId);
+
+    // Notify admins that a new conversation has started
+    try {
+      await fetch(`/api/conversations/${conversationId}/notify-admin`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          event: 'conversation_started',
+          conversationId: conversationId,
+          timestamp: new Date().toISOString()
+        })
+      });
+      console.log('✓ Admins notified of new conversation');
+    } catch (err) {
+      console.warn('Could not notify admins:', err);
+      // Don't stop the chat if notification fails
+    }
+
     subscribeToConversation();
     loadMessages();
   } catch (error) {
