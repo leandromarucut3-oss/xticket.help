@@ -735,7 +735,13 @@ chatButton.addEventListener('click', () => {
 });
 
 closeBtn.addEventListener('click', closeChatbox);
-chatboxOverlay.addEventListener('click', closeChatbox);
+
+// Only close chat if clicking directly on overlay background, not the chatbox itself
+chatboxOverlay.addEventListener('click', (e) => {
+  if (e.target === chatboxOverlay) {
+    closeChatbox();
+  }
+});
 
 function closeChatbox() {
   chatboxContainer.classList.remove('active');
@@ -761,14 +767,34 @@ async function initializeChatbox() {
   // Otherwise create new conversation
   try {
     const response = await fetch('/api/conversations', {method: 'POST'});
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: Failed to create conversation`);
+    }
+
     const data = await response.json();
+
+    if (!data.conversationId) {
+      throw new Error('No conversation ID returned from server');
+    }
+
     conversationId = data.conversationId;
     localStorage.setItem('chatConversationId', conversationId);
-    console.log('Created new conversation:', conversationId);
+    console.log('✓ Created new conversation:', conversationId);
     subscribeToConversation();
     loadMessages();
   } catch (error) {
-    console.error('Error creating conversation:', error);
+    console.error('❌ Error creating conversation:', error);
+
+    // Show error message instead of closing chat
+    const errorMsg = document.createElement('div');
+    errorMsg.className = 'message admin';
+    errorMsg.innerHTML = `
+      <div class="message-content" style="background-color: #ffe6e6; color: #a30c00;">
+        Unable to connect to support. Please try refreshing the page or contact us at support@example.com
+      </div>
+    `;
+    chatboxMessages.appendChild(errorMsg);
   }
 }
 
@@ -880,19 +906,26 @@ async function loadMessages() {
     const response = await fetch(`/api/conversations/${conversationId}/messages`);
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      console.warn(`HTTP ${response.status}: Could not load messages, will continue with polling`);
+      return;
     }
 
     const messages = await response.json();
-    console.log('Loaded', messages.length, 'messages:', messages);
+    console.log('✓ Loaded', messages.length, 'messages');
 
-    chatboxMessages.innerHTML = '';
+    // Remove loading indicator and welcome message if they exist
+    const loadingMsg = chatboxMessages.querySelector('.message.admin:last-child');
+    if (loadingMsg && loadingMsg.innerHTML.includes('loading-dots')) {
+      loadingMsg.remove();
+    }
+
     messages.forEach(msg => {
       console.log('Display message:', msg);
       addMessage(msg.text, msg.sender_role);
     });
   } catch (error) {
-    console.error('Error loading messages:', error);
+    console.warn('Could not load messages from API (will use polling):', error);
+    // Chat stays open - don't close on error
   }
 }
 
