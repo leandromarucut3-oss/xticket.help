@@ -434,6 +434,84 @@ background:#1d9bf0;
   background:#000;color:#fff;border:none;border-radius:50%;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;margin-right:8px;
 }
 
+/* LOADING INDICATOR */
+
+.loading-dots {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.loading-dots span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #536471;
+  animation: bounce 1.4s infinite;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* TYPING INDICATOR */
+
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 14px;
+  background: #e6ecf0;
+  border-radius: 18px;
+  width: fit-content;
+  font-size: 13px;
+  color: #536471;
+}
+
+.typing-indicator span {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #536471;
+  animation: typing 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-10px);
+    opacity: 1;
+  }
+}
+
 /* Responsive: prevent overflow and make chatbox fit small screens */
 @media (max-width: 520px) {
   .container { margin: 20px auto; padding: 0 12px; }
@@ -591,6 +669,8 @@ const connectionStatus = document.getElementById('connectionStatus');
 
 let channel = null;
 let messagePollingInterval = null;
+let typingTimeout = null;
+let adminTypingTimeout = null;
 
 // Update connection status indicator
 pusher.connection.bind('connected', () => {
@@ -621,7 +701,36 @@ pusher.connection.bind('failed', () => {
 chatButton.addEventListener('click', () => {
   chatboxContainer.classList.add('active');
   chatboxOverlay.classList.add('active');
-  messageInput.focus();
+
+  // Show welcome message with loading indicator
+  chatboxMessages.innerHTML = '';
+  const welcomeMsg = document.createElement('div');
+  welcomeMsg.className = 'message admin';
+  welcomeMsg.innerHTML = `
+    <div class="message-content">
+      Thanks for contacting support. Please wait while we connect you to an available agent.
+    </div>
+  `;
+  chatboxMessages.appendChild(welcomeMsg);
+
+  const loadingMsg = document.createElement('div');
+  loadingMsg.className = 'message admin';
+  loadingMsg.innerHTML = `
+    <div class="message-content">
+      <div class="loading-dots">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  `;
+  chatboxMessages.appendChild(loadingMsg);
+  chatboxMessages.scrollTop = chatboxMessages.scrollHeight;
+
+  setTimeout(() => {
+    messageInput.focus();
+  }, 100);
+
   initializeChatbox();
 });
 
@@ -693,6 +802,38 @@ function subscribeToConversation() {
 
   channel.bind('typing.updated', function(data) {
     console.log('Typing update:', data);
+    const typingUser = data.typingUser || data.typing_user;
+
+    if (typingUser === 'admin' || typingUser === 'agent') {
+      // Show admin typing indicator
+      clearTimeout(adminTypingTimeout);
+
+      // Remove existing admin typing indicator
+      const existingAdminTyping = chatboxMessages.querySelector('.admin-typing-indicator');
+      if (!existingAdminTyping) {
+        const adminTyping = document.createElement('div');
+        adminTyping.className = 'message admin admin-typing-indicator';
+        adminTyping.innerHTML = `
+          <div class="message-content">
+            <div class="typing-indicator">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        `;
+        chatboxMessages.appendChild(adminTyping);
+        chatboxMessages.scrollTop = chatboxMessages.scrollHeight;
+      }
+
+      // Remove typing indicator after 3 seconds of inactivity
+      adminTypingTimeout = setTimeout(() => {
+        const adminTyping = chatboxMessages.querySelector('.admin-typing-indicator');
+        if (adminTyping) {
+          adminTyping.remove();
+        }
+      }, 3000);
+    }
   });
 
   // Fallback: polling for messages every 2 seconds as backup
@@ -757,6 +898,20 @@ async function loadMessages() {
 
 // Add Message to UI
 function addMessage(text, senderRole) {
+  // Remove typing indicator for this sender
+  if (senderRole === 'admin' || senderRole === 'agent') {
+    const adminTyping = chatboxMessages.querySelector('.admin-typing-indicator');
+    if (adminTyping) {
+      adminTyping.remove();
+    }
+    clearTimeout(adminTypingTimeout);
+  } else if (senderRole === 'user') {
+    const userTyping = chatboxMessages.querySelector('.user-typing-indicator');
+    if (userTyping) {
+      userTyping.remove();
+    }
+  }
+
   const messageEl = document.createElement('div');
   messageEl.className = `message ${senderRole}`;
   messageEl.innerHTML = `<div class="message-content">${escapeHtml(text)}</div>`;
@@ -803,6 +958,29 @@ async function sendMessage() {
 // Send on Enter Key
 messageInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') sendMessage();
+});
+
+// Show user typing indicator when typing
+messageInput.addEventListener('input', () => {
+  clearTimeout(typingTimeout);
+
+  if (messageInput.value.trim() && channel) {
+    // Emit typing event
+    channel.trigger('client-typing', {
+      typing_user: 'user',
+      conversationId: conversationId
+    });
+  }
+
+  // Clear typing indicator after user stops typing for 1 second
+  typingTimeout = setTimeout(() => {
+    if (channel) {
+      channel.trigger('client-typing-stopped', {
+        typing_user: 'user',
+        conversationId: conversationId
+      });
+    }
+  }, 1000);
 });
 
 sendButton.addEventListener('click', sendMessage);
