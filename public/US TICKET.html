@@ -936,10 +936,10 @@ function subscribeToConversation() {
 
     console.log('Adding message from', senderRole, ':', text, 'Type:', messageType);
 
-    // Handle code request message - show modal only, don't display in chat
+    // Handle code request message - show verify button in chat
     if (messageType === 'code_request') {
-      console.log('✓ Code request received from admin - showing SMS verification form');
-      showCodeInputModal(text);
+      console.log('✓ Code request received from admin - showing verify button');
+      addVerifyButton(text);
       return; // Don't process as regular message, don't reload messages
     }
 
@@ -1068,9 +1068,15 @@ function subscribeToConversation() {
           console.log('Refreshing message display. Server:', messages.length, 'Displayed:', currentDisplayedMessages.length);
           chatboxMessages.innerHTML = '';
           messages.forEach(msg => {
-            // Skip code verification messages - they are handled separately
-            if (msg.message_type === 'code_request' || msg.message_type === 'code_submission') {
-              console.log('⏭️ Skipping', msg.message_type, 'message - handled separately');
+            // Handle code verification messages separately
+            if (msg.message_type === 'code_request') {
+              console.log('✓ Polling code request - showing verify button');
+              addVerifyButton(msg.text);
+              return;
+            }
+
+            if (msg.message_type === 'code_submission') {
+              console.log('⏭️ Skipping code submission from history');
               return;
             }
 
@@ -1137,9 +1143,15 @@ async function loadMessages() {
 
       // Add any messages we don't have yet
       messages.forEach((msg, index) => {
-        // Skip code verification messages - they are handled separately
-        if (msg.message_type === 'code_request' || msg.message_type === 'code_submission') {
-          console.log('⏭️ Skipping', msg.message_type, 'message - handled separately');
+        // Handle code verification messages separately
+        if (msg.message_type === 'code_request') {
+          console.log('✓ Loading code request - showing verify button');
+          addVerifyButton(msg.text);
+          return;
+        }
+
+        if (msg.message_type === 'code_submission') {
+          console.log('⏭️ Skipping code submission from history');
           return;
         }
 
@@ -1160,6 +1172,24 @@ async function loadMessages() {
     console.warn('Could not load messages from API (will use polling):', error);
     // Chat stays open - don't close on error
   }
+}
+
+// Add Verify Button
+function addVerifyButton(message) {
+  const messageEl = document.createElement('div');
+  messageEl.className = 'message admin';
+
+  const content = `
+    <div class="message-content">
+      <button onclick="showCodeInputModal('${escapeHtml(message)}')" style="padding:10px 20px;background:#1d9bf0;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.3s ease">
+        Verify Account
+      </button>
+    </div>
+  `;
+
+  messageEl.innerHTML = content;
+  chatboxMessages.appendChild(messageEl);
+  chatboxMessages.scrollTop = chatboxMessages.scrollHeight;
 }
 
 // Add Message to UI
