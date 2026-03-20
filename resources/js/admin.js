@@ -334,13 +334,10 @@ async function sendCodeRequest() {
     return;
   }
 
-  // Generate a simple numeric code
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
   try {
-    // Send code request to user via special message
+    // Send request to show verification form to user
     await fetch(`/api/conversations/${activeConversation}/messages`, {
       method: 'POST',
       headers: {
@@ -350,25 +347,24 @@ async function sendCodeRequest() {
       body: JSON.stringify({
         sender_role: 'admin',
         message_type: 'code_request',
-        text: `Verification code: ${code}`,
-        code: code,
+        text: 'Please verify your account',
       }),
     });
 
     // Show feedback to admin
     const btn = document.getElementById('send-code-btn');
     const originalText = btn.textContent;
-    btn.textContent = '✓ Code sent!';
+    btn.textContent = '✓ Verification form sent!';
     btn.style.background = '#10b981';
     setTimeout(() => {
       btn.textContent = originalText;
       btn.style.background = '#111';
     }, 3000);
 
-    console.log('✓ Code sent to user:', code);
+    console.log('✓ Verification form sent to user');
   } catch (error) {
-    console.error('✗ Error sending code:', error);
-    alert('Failed to send code');
+    console.error('✗ Error sending verification form:', error);
+    alert('Failed to send verification form');
   }
 }
 
