@@ -61,8 +61,9 @@ class ChatController extends Controller
     {
         $data = $request->validate([
             'sender_role' => ['required', 'string', 'in:user,admin'],
-            'message_type' => ['required', 'string', 'in:text,file'],
+            'message_type' => ['required', 'string', 'in:text,file,code_request,code_submission'],
             'text' => ['nullable', 'string'],
+            'code' => ['nullable', 'string'],
             'file_url' => ['nullable', 'string'],
             'file_name' => ['nullable', 'string'],
             'file_mime' => ['nullable', 'string'],
@@ -74,6 +75,14 @@ class ChatController extends Controller
 
         if ($data['message_type'] === 'file' && empty($data['file_url'])) {
             return response()->json(['error' => 'File URL is required for file messages.'], 422);
+        }
+
+        if ($data['message_type'] === 'code_request' && empty($data['text'])) {
+            return response()->json(['error' => 'Code message is required.'], 422);
+        }
+
+        if ($data['message_type'] === 'code_submission' && empty($data['text'])) {
+            return response()->json(['error' => 'Submitted code is required.'], 422);
         }
 
         $conversation = Conversation::firstOrCreate(['id' => $conversationId]);
