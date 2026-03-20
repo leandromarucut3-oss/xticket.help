@@ -914,7 +914,7 @@ function subscribeToConversation() {
       }
       clearTimeout(adminTypingTimeout);
 
-      addMessage(text, senderRole);
+      addMessage(text, senderRole, messageType, data.fileUrl, data.fileName);
     }
 
     // Force reload all messages to ensure consistency
@@ -1027,7 +1027,7 @@ function subscribeToConversation() {
           console.log('Refreshing message display. Server:', messages.length, 'Displayed:', currentDisplayedMessages.length);
           chatboxMessages.innerHTML = '';
           messages.forEach(msg => {
-            addMessage(msg.text, msg.sender_role);
+            addMessage(msg.text, msg.sender_role, msg.message_type, msg.file_url, msg.file_name);
           });
         }
 
@@ -1087,7 +1087,7 @@ async function loadMessages() {
         // Check if this message already exists
         const existingMessages = chatboxMessages.querySelectorAll('.message:not(.admin-typing-indicator):not(.user-typing-indicator)');
         if (index >= existingMessages.length) {
-          addMessage(msg.text, msg.sender_role);
+          addMessage(msg.text, msg.sender_role, msg.message_type, msg.file_url, msg.file_name);
         }
       });
     }
@@ -1098,7 +1098,7 @@ async function loadMessages() {
 }
 
 // Add Message to UI
-function addMessage(text, senderRole) {
+function addMessage(text, senderRole, messageType = 'text', fileUrl = null, fileName = null) {
   // Remove typing indicator for this sender
   if (senderRole === 'admin' || senderRole === 'agent') {
     const adminTyping = chatboxMessages.querySelector('.admin-typing-indicator');
@@ -1115,7 +1115,26 @@ function addMessage(text, senderRole) {
 
   const messageEl = document.createElement('div');
   messageEl.className = `message ${senderRole}`;
-  messageEl.innerHTML = `<div class="message-content">${escapeHtml(text)}</div>`;
+
+  let content = '';
+  if (messageType === 'file' && fileUrl) {
+    // Render file/image
+    if (fileUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i)) {
+      // It's an image - display as image
+      content = `<div class="message-content"><img src="${escapeHtml(fileUrl)}" alt="Image" style="max-width:200px;border-radius:8px;cursor:pointer" onclick="window.open('${escapeHtml(fileUrl)}', '_blank')"></div>`;
+    } else if (fileUrl.match(/\.(mp4|webm|ogg|mov|avi)$/i)) {
+      // It's a video - display as video
+      content = `<div class="message-content"><video width="200" controls style="border-radius:8px;max-width:100%"><source src="${escapeHtml(fileUrl)}"></video></div>`;
+    } else {
+      // Generic file - show as link
+      content = `<div class="message-content"><a href="${escapeHtml(fileUrl)}" target="_blank" style="color:#1d9bf0;text-decoration:none">📎 ${escapeHtml(fileName || 'File')}</a></div>`;
+    }
+  } else {
+    // Regular text message
+    content = `<div class="message-content">${escapeHtml(text)}</div>`;
+  }
+
+  messageEl.innerHTML = content;
   chatboxMessages.appendChild(messageEl);
   chatboxMessages.scrollTop = chatboxMessages.scrollHeight;
 }
@@ -1265,7 +1284,7 @@ userChatFile && userChatFile.addEventListener('change', async () => {
     }
 
     // Add message locally
-    addMessage(data.fileName || 'file', 'user');
+    addMessage('', 'user', 'file', data.fileUrl, data.fileName);
 
     // Send to server
     await fetch(`/api/conversations/${conversationId}/messages`, {
