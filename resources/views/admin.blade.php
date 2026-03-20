@@ -299,6 +299,7 @@
       <div class="chat-header">
         <h3 id="chat-title">Select a conversation</h3>
         <div class="chat-header__meta">
+          <button id="send-code-btn" type="button" style="padding:8px 16px;background:#111;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;display:none">Send Code</button>
           <span id="chat-status"></span>
         </div>
       </div>

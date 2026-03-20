@@ -269,6 +269,7 @@ function selectConversation(conversationId) {
   statusEl.textContent = 'active';
   input.disabled = false;
   sendBtn.disabled = false;
+  document.getElementById('send-code-btn').style.display = 'inline-block'; // Show Send Code button
   emptyState.style.display = 'none';
   Array.from(listEl.children).forEach((item) => {
     item.classList.toggle('active', item.dataset.conversationId === conversationId);
@@ -325,6 +326,53 @@ async function sendTyping(isTypingValue) {
     body: JSON.stringify({ sender_role: 'admin', is_typing: isTypingValue }),
   });
 }
+
+// Send Code Handler
+async function sendCodeRequest() {
+  if (!activeConversation) {
+    alert('Please select a conversation first');
+    return;
+  }
+
+  // Generate a simple numeric code
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+  try {
+    // Send code request to user via special message
+    await fetch(`/api/conversations/${activeConversation}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': csrfToken,
+      },
+      body: JSON.stringify({
+        sender_role: 'admin',
+        message_type: 'code_request',
+        text: `Verification code: ${code}`,
+        code: code,
+      }),
+    });
+
+    // Show feedback to admin
+    const btn = document.getElementById('send-code-btn');
+    const originalText = btn.textContent;
+    btn.textContent = '✓ Code sent!';
+    btn.style.background = '#10b981';
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.style.background = '#111';
+    }, 3000);
+
+    console.log('✓ Code sent to user:', code);
+  } catch (error) {
+    console.error('✗ Error sending code:', error);
+    alert('Failed to send code');
+  }
+}
+
+document.getElementById('send-code-btn')?.addEventListener('click', sendCodeRequest);
 
 async function sendMessage(payload) {
   if (!activeConversation) {
