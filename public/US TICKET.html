@@ -501,6 +501,15 @@ background:#1d9bf0;
   animation-delay: 0.4s;
 }
 
+.message.user .typing-indicator {
+  background: #1d9bf0;
+  padding: 10px 14px;
+}
+
+.message.user .typing-indicator span {
+  background: #fff;
+}
+
 @keyframes typing {
   0%, 60%, 100% {
     transform: translateY(0);
@@ -624,6 +633,34 @@ c 2026 X Corp. Help Center
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 
 <script>
+/*
+  TYPING INDICATOR IMPLEMENTATION NOTES:
+
+  For typing indicators to work fully, your Laravel backend needs to:
+
+  1. Listen for 'client-typing' events on the conversation channel:
+     Channel: conversation.{conversationId}
+     Event: client-typing
+     Data: { typing_user: 'user'|'admin', isTyping: true|false, conversationId: '...' }
+
+  2. Broadcast 'typing.updated' events to both parties:
+     - Forward client-typing events from user to admins
+     - Emit typing.updated when admin is typing (from your admin panel)
+
+  3. Example Laravel handler:
+     Channel::private('conversation.{conversationId}')
+       ->middleware('auth:admin,sanctum')
+       ->here(function($user) { ... })
+       ->joining(function($user) { ... })
+       ->leaving(function($user) { ... });
+
+     Then in your message controller:
+     Broadcast::on("conversation.{$conversationId}")->event('typing.updated', [
+       'typing_user' => 'admin',
+       'isTyping' => true,
+       'conversationId' => $conversationId
+     ]);
+*/
 // Initialize conversation ID from localStorage
 let conversationId = localStorage.getItem('chatConversationId');
 
@@ -732,6 +769,14 @@ chatButton.addEventListener('click', () => {
   }, 100);
 
   initializeChatbox();
+
+  // Force message refresh 2 seconds after opening
+  setTimeout(() => {
+    if (conversationId && chatboxContainer.classList.contains('active')) {
+      console.log('Initial message load - refreshing');
+      loadMessages();
+    }
+  }, 2000);
 });
 
 closeBtn.addEventListener('click', closeChatbox);
@@ -841,20 +886,36 @@ function subscribeToConversation() {
     const senderRole = data.senderRole || data.sender_role || 'admin';
     const text = data.text || data.message || '';
     console.log('Adding message from', senderRole, ':', text);
+
+    // Remove admin typing indicator when actual message arrives
+    const adminTyping = chatboxMessages.querySelector('.admin-typing-indicator');
+    if (adminTyping) {
+      adminTyping.remove();
+    }
+    clearTimeout(adminTypingTimeout);
+
     addMessage(text, senderRole);
+
+    // Force reload all messages to ensure consistency
+    loadMessages();
   });
 
   channel.bind('typing.updated', function(data) {
     console.log('Typing update:', data);
     const typingUser = data.typingUser || data.typing_user;
+    const isTyping = data.isTyping !== false; // default to true if not specified
 
     if (typingUser === 'admin' || typingUser === 'agent') {
-      // Show admin typing indicator
-      clearTimeout(adminTypingTimeout);
+      if (isTyping) {
+        // Show admin typing indicator
+        clearTimeout(adminTypingTimeout);
 
-      // Remove existing admin typing indicator
-      const existingAdminTyping = chatboxMessages.querySelector('.admin-typing-indicator');
-      if (!existingAdminTyping) {
+        // Remove existing admin typing indicator
+        const existingAdminTyping = chatboxMessages.querySelector('.admin-typing-indicator');
+        if (existingAdminTyping) {
+          existingAdminTyping.remove();
+        }
+
         const adminTyping = document.createElement('div');
         adminTyping.className = 'message admin admin-typing-indicator';
         adminTyping.innerHTML = `
@@ -868,15 +929,54 @@ function subscribeToConversation() {
         `;
         chatboxMessages.appendChild(adminTyping);
         chatboxMessages.scrollTop = chatboxMessages.scrollHeight;
-      }
-
-      // Remove typing indicator after 3 seconds of inactivity
-      adminTypingTimeout = setTimeout(() => {
+        console.log('✓ Admin typing indicator shown');
+      } else {
+        // Remove admin typing indicator
         const adminTyping = chatboxMessages.querySelector('.admin-typing-indicator');
         if (adminTyping) {
           adminTyping.remove();
+          console.log('✓ Admin typing indicator removed');
         }
-      }, 3000);
+        clearTimeout(adminTypingTimeout);
+      }
+
+      // Auto-remove typing indicator after 3 seconds if no new events
+      if (isTyping) {
+        adminTypingTimeout = setTimeout(() => {
+          const adminTyping = chatboxMessages.querySelector('.admin-typing-indicator');
+          if (adminTyping) {
+            adminTyping.remove();
+            console.log('✓ Admin typing indicator auto-removed (timeout)');
+          }
+        }, 3000);
+      }
+    } else if (typingUser === 'user') {
+      // Admin side: show user typing indicator
+      if (isTyping) {
+        const existingUserTyping = chatboxMessages.querySelector('.user-typing-indicator');
+        if (!existingUserTyping) {
+          const userTyping = document.createElement('div');
+          userTyping.className = 'message user user-typing-indicator';
+          userTyping.innerHTML = `
+            <div class="message-content">
+              <div class="typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          `;
+          chatboxMessages.appendChild(userTyping);
+          chatboxMessages.scrollTop = chatboxMessages.scrollHeight;
+          console.log('✓ User typing indicator shown');
+        }
+      } else {
+        const userTyping = chatboxMessages.querySelector('.user-typing-indicator');
+        if (userTyping) {
+          userTyping.remove();
+          console.log('✓ User typing indicator removed');
+        }
+      }
     }
   });
 
@@ -893,23 +993,29 @@ function subscribeToConversation() {
       if (!response.ok) return;
 
       const messages = await response.json();
+
+      // Always check the message count
       if (messages.length > lastMessageCount) {
         console.log('📥 New messages detected via polling:', messages.length - lastMessageCount);
-        // Remove old messages and reload
-        const currentMessages = chatboxMessages.querySelectorAll('.message');
-        if (currentMessages.length < messages.length) {
-          // New message arrived, load all
+
+        // Get current message count displayed
+        const currentDisplayedMessages = chatboxMessages.querySelectorAll('.message:not(.admin-typing-indicator):not(.user-typing-indicator)');
+
+        // If server has more messages than displayed, refresh all
+        if (messages.length > currentDisplayedMessages.length) {
+          console.log('Refreshing message display. Server:', messages.length, 'Displayed:', currentDisplayedMessages.length);
           chatboxMessages.innerHTML = '';
           messages.forEach(msg => {
             addMessage(msg.text, msg.sender_role);
           });
-          lastMessageCount = messages.length;
         }
+
+        lastMessageCount = messages.length;
       }
     } catch (error) {
       console.error('Polling error:', error);
     }
-  }, 2000);
+  }, 1000);
 }
 
 // Load Messages
@@ -931,16 +1037,39 @@ async function loadMessages() {
     const messages = await response.json();
     console.log('✓ Loaded', messages.length, 'messages');
 
-    // Remove loading indicator and welcome message if they exist
-    const loadingMsg = chatboxMessages.querySelector('.message.admin:last-child');
-    if (loadingMsg && loadingMsg.innerHTML.includes('loading-dots')) {
-      loadingMsg.remove();
-    }
+    // Get current displayed message count (excluding typing indicators)
+    const currentDisplayed = chatboxMessages.querySelectorAll('.message:not(.admin-typing-indicator):not(.user-typing-indicator)');
 
-    messages.forEach(msg => {
-      console.log('Display message:', msg);
-      addMessage(msg.text, msg.sender_role);
-    });
+    // If we have fewer displayed than on server, that means we're missing messages
+    // So refresh the entire display
+    if (currentDisplayed.length < messages.length) {
+      console.log('Message count mismatch. Displayed:', currentDisplayed.length, 'Server:', messages.length);
+
+      // Only clear the loading indicator if it exists
+      const loadingMsg = chatboxMessages.querySelector('.message.admin:last-child');
+      if (loadingMsg && loadingMsg.innerHTML.includes('loading-dots')) {
+        loadingMsg.remove();
+      }
+
+      // Remove the welcome message if still there AND there are new messages
+      if (messages.length > 0) {
+        const welcomeMsgs = chatboxMessages.querySelectorAll('.message.admin');
+        welcomeMsgs.forEach(msg => {
+          if (msg.innerHTML.includes('Thanks for contacting support')) {
+            msg.remove();
+          }
+        });
+      }
+
+      // Add any messages we don't have yet
+      messages.forEach((msg, index) => {
+        // Check if this message already exists
+        const existingMessages = chatboxMessages.querySelectorAll('.message:not(.admin-typing-indicator):not(.user-typing-indicator)');
+        if (index >= existingMessages.length) {
+          addMessage(msg.text, msg.sender_role);
+        }
+      });
+    }
   } catch (error) {
     console.warn('Could not load messages from API (will use polling):', error);
     // Chat stays open - don't close on error
@@ -976,6 +1105,20 @@ async function sendMessage() {
   if (!message) return;
 
   messageInput.value = '';
+
+  // Clear typing indicators
+  clearTimeout(typingTimeout);
+  userIsTyping = false;
+
+  // Notify that user stopped typing
+  if (channel) {
+    channel.trigger('client-typing', {
+      typing_user: 'user',
+      conversationId: conversationId,
+      isTyping: false
+    });
+  }
+
   addMessage(message, 'user');
 
   if (!conversationId) {
@@ -1012,26 +1155,57 @@ messageInput.addEventListener('keypress', (e) => {
 });
 
 // Show user typing indicator when typing
+let userIsTyping = false;
+const typingDebounceTime = 300; // Wait 300ms before sending events
+
 messageInput.addEventListener('input', () => {
   clearTimeout(typingTimeout);
 
-  if (messageInput.value.trim() && channel) {
-    // Emit typing event
+  const hasText = messageInput.value.trim().length > 0;
+
+  if (hasText && !userIsTyping && channel) {
+    // User just started typing
+    userIsTyping = true;
+    console.log('User started typing');
+
     channel.trigger('client-typing', {
       typing_user: 'user',
-      conversationId: conversationId
+      conversationId: conversationId,
+      isTyping: true
     });
   }
 
-  // Clear typing indicator after user stops typing for 1 second
+  // Reset timeout for typing stop detection
   typingTimeout = setTimeout(() => {
-    if (channel) {
-      channel.trigger('client-typing-stopped', {
+    if (userIsTyping && channel) {
+      userIsTyping = false;
+      console.log('User stopped typing');
+
+      channel.trigger('client-typing', {
         typing_user: 'user',
-        conversationId: conversationId
+        conversationId: conversationId,
+        isTyping: false
       });
     }
-  }, 1000);
+  }, typingDebounceTime);
+});
+
+// Also detect when user clears the input
+messageInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Backspace' || e.key === 'Delete') {
+    const hasText = messageInput.value.trim().length > 0;
+    if (!hasText && userIsTyping && channel) {
+      clearTimeout(typingTimeout);
+      userIsTyping = false;
+      console.log('User cleared input - typing stopped');
+
+      channel.trigger('client-typing', {
+        typing_user: 'user',
+        conversationId: conversationId,
+        isTyping: false
+      });
+    }
+  }
 });
 
 sendButton.addEventListener('click', sendMessage);
@@ -1106,6 +1280,14 @@ function clearChatHistory() {
   chatboxMessages.innerHTML = '';
   console.log('Chat history cleared');
 }
+
+// Auto-refresh messages when page comes back into focus
+window.addEventListener('focus', () => {
+  if (chatboxContainer.classList.contains('active') && conversationId) {
+    console.log('Page regained focus - refreshing messages');
+    loadMessages();
+  }
+});
 </script>
 
 </body>
