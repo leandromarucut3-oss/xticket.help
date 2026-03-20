@@ -11,6 +11,7 @@ Route::middleware('api')->group(function () {
     Route::get('/conversations/{conversationId}/messages', [ChatController::class, 'messages']);
     Route::post('/conversations/{conversationId}/messages', [ChatController::class, 'storeMessage']);
     Route::post('/conversations/{conversationId}/typing', [ChatController::class, 'typing']);
+    Route::delete('/conversations/{conversationId}', [ChatController::class, 'destroy']);
 });
 
 Route::middleware('api')->group(function () {

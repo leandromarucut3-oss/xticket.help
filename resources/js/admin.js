@@ -270,6 +270,7 @@ function selectConversation(conversationId) {
   input.disabled = false;
   sendBtn.disabled = false;
   document.getElementById('send-code-btn').style.display = 'inline-block'; // Show Send Code button
+  document.getElementById('delete-chat-btn').style.display = 'inline-block'; // Show Delete Chat button
   emptyState.style.display = 'none';
   Array.from(listEl.children).forEach((item) => {
     item.classList.toggle('active', item.dataset.conversationId === conversationId);
@@ -369,6 +370,51 @@ async function sendCodeRequest() {
 }
 
 document.getElementById('send-code-btn')?.addEventListener('click', sendCodeRequest);
+
+async function deleteChat() {
+  if (!activeConversation) {
+    alert('Please select a conversation first');
+    return;
+  }
+
+  if (!confirm('Are you sure you want to delete this chat session? This cannot be undone.')) {
+    return;
+  }
+
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+  try {
+    const response = await fetch(`/api/conversations/${activeConversation}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': csrfToken,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    console.log('✓ Chat session deleted');
+    alert('Chat session deleted successfully');
+
+    // Refresh conversations list
+    loadConversations();
+
+    // Clear chat
+    activeConversation = null;
+    document.getElementById('chat-title').textContent = 'Select a conversation';
+    document.getElementById('chat-messages').innerHTML = '<div class="empty-state">No conversation selected.</div>';
+    document.getElementById('send-code-btn').style.display = 'none';
+    document.getElementById('delete-chat-btn').style.display = 'none';
+  } catch (error) {
+    console.error('✗ Error deleting chat session:', error);
+    alert('Failed to delete chat session. Please try again.');
+  }
+}
+
+document.getElementById('delete-chat-btn')?.addEventListener('click', deleteChat);
 
 async function sendMessage(payload) {
   if (!activeConversation) {

@@ -128,4 +128,21 @@ class ChatController extends Controller
 
         return response()->json(['ok' => true]);
     }
+
+    public function destroy(string $conversationId): JsonResponse
+    {
+        $conversation = Conversation::find($conversationId);
+
+        if (!$conversation) {
+            return response()->json(['error' => 'Conversation not found'], 404);
+        }
+
+        // Delete all messages in the conversation first
+        $conversation->messages()->delete();
+
+        // Delete the conversation
+        $conversation->delete();
+
+        return response()->json(['ok' => true]);
+    }
 }
