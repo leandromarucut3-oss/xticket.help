@@ -1027,6 +1027,12 @@ function subscribeToConversation() {
           console.log('Refreshing message display. Server:', messages.length, 'Displayed:', currentDisplayedMessages.length);
           chatboxMessages.innerHTML = '';
           messages.forEach(msg => {
+            console.log('📨 Polling message:', {
+              messageType: msg.message_type,
+              text: msg.text,
+              fileUrl: msg.file_url,
+              fileName: msg.file_name
+            });
             addMessage(msg.text, msg.sender_role, msg.message_type, msg.file_url, msg.file_name);
           });
         }
@@ -1087,6 +1093,12 @@ async function loadMessages() {
         // Check if this message already exists
         const existingMessages = chatboxMessages.querySelectorAll('.message:not(.admin-typing-indicator):not(.user-typing-indicator)');
         if (index >= existingMessages.length) {
+          console.log('📨 Loading message from API:', {
+            messageType: msg.message_type,
+            text: msg.text,
+            fileUrl: msg.file_url,
+            fileName: msg.file_name
+          });
           addMessage(msg.text, msg.sender_role, msg.message_type, msg.file_url, msg.file_name);
         }
       });
@@ -1118,15 +1130,25 @@ function addMessage(text, senderRole, messageType = 'text', fileUrl = null, file
 
   let content = '';
   if (messageType === 'file' && fileUrl) {
-    // Render file/image
-    if (fileUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i)) {
-      // It's an image - display as image
-      content = `<div class="message-content"><img src="${escapeHtml(fileUrl)}" alt="Image" style="max-width:200px;border-radius:8px;cursor:pointer" onclick="window.open('${escapeHtml(fileUrl)}', '_blank')"></div>`;
-    } else if (fileUrl.match(/\.(mp4|webm|ogg|mov|avi)$/i)) {
-      // It's a video - display as video
+    console.log('📸 Rendering file message:', { messageType, fileUrl, fileName });
+
+    // Extract just the file extension from URL (remove query parameters)
+    const urlWithoutQuery = fileUrl.split('?')[0];
+    const extension = urlWithoutQuery.split('.').pop()?.toLowerCase() || '';
+
+    // It's an image - display as image
+    if (/^(jpg|jpeg|png|gif|webp|bmp)$/.test(extension)) {
+      console.log('✓ Displaying as image');
+      content = `<div class="message-content"><img src="${escapeHtml(fileUrl)}" alt="Image" style="max-width:200px;border-radius:8px;cursor:pointer;object-fit:cover" onclick="window.open('${escapeHtml(fileUrl)}', '_blank')"></div>`;
+    }
+    // It's a video - display as video
+    else if (/^(mp4|webm|ogg|mov|avi)$/.test(extension)) {
+      console.log('✓ Displaying as video');
       content = `<div class="message-content"><video width="200" controls style="border-radius:8px;max-width:100%"><source src="${escapeHtml(fileUrl)}"></video></div>`;
-    } else {
-      // Generic file - show as link
+    }
+    // Generic file - show as link
+    else {
+      console.log('✓ Displaying as file link');
       content = `<div class="message-content"><a href="${escapeHtml(fileUrl)}" target="_blank" style="color:#1d9bf0;text-decoration:none">📎 ${escapeHtml(fileName || 'File')}</a></div>`;
     }
   } else {
@@ -1278,12 +1300,19 @@ userChatFile && userChatFile.addEventListener('change', async () => {
   try {
     const response = await fetch('/api/uploads', { method: 'POST', body: formData });
     const data = await response.json();
+    console.log('📤 Upload response:', data);
+
     if (!data.fileUrl) {
-      console.error('Upload failed', data);
+      console.error('Upload failed - no fileUrl in response', data);
       return;
     }
 
-    // Add message locally
+    // Add message locally with full file metadata
+    console.log('📸 Adding message locally:', {
+      messageType: 'file',
+      fileUrl: data.fileUrl,
+      fileName: data.fileName
+    });
     addMessage('', 'user', 'file', data.fileUrl, data.fileName);
 
     // Send to server
