@@ -113,20 +113,26 @@ function addMessage(payload, role) {
   }
   const msg = document.createElement('div');
   msg.className = `chat-message ${role}`;
+
+  const fileUrl = payload.fileUrl ? payload.fileUrl.trim() : '';
+  const normalizedFileUrl = fileUrl && !/^(https?:\/\/|\/)/i.test(fileUrl)
+    ? `${window.location.origin}/${fileUrl.replace(/^\/+/, '')}`
+    : fileUrl;
+
   if (payload.messageType === 'file') {
     if (payload.fileMime && payload.fileMime.startsWith('image/')) {
       const img = document.createElement('img');
-      img.src = payload.fileUrl;
+      img.src = normalizedFileUrl;
       img.alt = payload.fileName || 'image';
       msg.appendChild(img);
     } else if (payload.fileMime && payload.fileMime.startsWith('video/')) {
       const video = document.createElement('video');
-      video.src = payload.fileUrl;
+      video.src = normalizedFileUrl;
       video.controls = true;
       msg.appendChild(video);
     }
     const link = document.createElement('a');
-    link.href = payload.fileUrl;
+    link.href = normalizedFileUrl;
     link.textContent = payload.fileName || 'Download file';
     link.target = '_blank';
     link.rel = 'noopener';
@@ -295,6 +301,16 @@ function selectConversation(conversationId) {
           }, 'user');
           setTyping(false);
           console.log('User message received:', event);
+        } else if (event.senderRole === 'admin') {
+          addMessage({
+            messageType: event.messageType,
+            text: event.text,
+            fileUrl: event.fileUrl,
+            fileName: event.fileName,
+            fileMime: event.fileMime,
+          }, 'admin');
+          setTyping(false);
+          console.log('Admin message on active conversation received:', event);
         }
       })
       .listen('typing.updated', (event) => {
@@ -486,9 +502,17 @@ form.addEventListener('submit', async (event) => {
     return;
   }
   const payload = { messageType: 'text', text };
-  // Don't add message locally - let the broadcast event handle it
-  // This prevents duplication
-  await sendMessage(payload);
+
+  // Optimistic UI: render admin message immediately to avoid first-send delay
+  addMessage(payload, 'admin');
+  lastMessageId += 1;
+
+  try {
+    await sendMessage(payload);
+  } catch (error) {
+    console.error('✗ Failed to send admin message:', error);
+  }
+
   input.value = '';
   input.style.height = 'auto';
   if (isTyping) {

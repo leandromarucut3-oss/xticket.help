@@ -155,20 +155,26 @@ function appendMessage(payload, role) {
   if (!chatMessages.contains(chatTyping)) {
     chatMessages.appendChild(chatTyping);
   }
+
+  const fileUrl = payload.fileUrl ? payload.fileUrl.trim() : '';
+  const normalizedFileUrl = fileUrl && !/^(https?:\/\/|\/)/i.test(fileUrl)
+    ? `${window.location.origin}/${fileUrl.replace(/^\/+/, '')}`
+    : fileUrl;
+
   if (payload.messageType === 'file') {
     if (payload.fileMime && payload.fileMime.startsWith('image/')) {
       const img = document.createElement('img');
-      img.src = payload.fileUrl;
+      img.src = normalizedFileUrl;
       img.alt = payload.fileName || 'image';
       msg.appendChild(img);
     } else if (payload.fileMime && payload.fileMime.startsWith('video/')) {
       const video = document.createElement('video');
-      video.src = payload.fileUrl;
+      video.src = normalizedFileUrl;
       video.controls = true;
       msg.appendChild(video);
     }
     const link = document.createElement('a');
-    link.href = payload.fileUrl;
+    link.href = normalizedFileUrl;
     link.textContent = payload.fileName || 'Download file';
     link.target = '_blank';
     link.rel = 'noopener';
@@ -218,7 +224,7 @@ async function loadHistory() {
       fileUrl: message.file_url,
       fileName: message.file_name,
       fileMime: message.file_mime,
-    }, message.sender_role === 'user' ? 'user' : '');
+    }, message.sender_role === 'user' ? 'user' : 'admin');
   });
   if (!messages.length && placeholder) {
     chatMessages.appendChild(placeholder);
@@ -312,8 +318,15 @@ function registerChannel() {
   if (!conversationId || !echo) {
     return;
   }
-  echo
-    .channel(`conversation.${conversationId}`)
+  const convChannel = echo.channel(`conversation.${conversationId}`);
+
+  convChannel.subscribed(() => {
+    console.log('✅ Subscribed to conversation channel:', conversationId);
+    // Sync missed messages in case admin sent before this client was fully ready
+    loadHistory();
+  });
+
+  convChannel
     .listen('message.sent', (event) => {
       if (event.senderRole === 'admin') {
         appendMessage({
@@ -322,7 +335,7 @@ function registerChannel() {
           fileUrl: event.fileUrl,
           fileName: event.fileName,
           fileMime: event.fileMime,
-        }, '');
+        }, 'admin');
         setTyping(false);
       }
     })
@@ -332,6 +345,14 @@ function registerChannel() {
         setTyping(!!event.isTyping);
       }
     });
+
+  // In case WebSocket connects but the first message event is missed or delayed,
+  // poll once after 2 seconds to ensure early messages show quickly.
+  setTimeout(() => {
+    if (conversationId) {
+      loadHistory();
+    }
+  }, 2000);
 }
 
 async function init() {
