@@ -262,6 +262,27 @@
       font-size: 18px;
       line-height: 1;
     }
+
+    @media (max-width: 768px) {
+      .chat-input {
+        padding: 12px 16px;
+        gap: 8px;
+      }
+      .chat-input textarea {
+        padding: 8px 10px;
+        font-size: 13px;
+        min-height: 36px;
+      }
+      .chat-input button {
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+      .chat-attach {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+      }
+    }
     #chat-saved-replies {
       flex-shrink: 0;
       background: #f4f5f7;

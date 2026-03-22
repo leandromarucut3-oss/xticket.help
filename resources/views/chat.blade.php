@@ -174,6 +174,26 @@
       font-size: 18px;
       line-height: 1;
     }
+
+    @media (max-width: 480px) {
+      .chat-input {
+        padding: 8px 12px;
+        gap: 8px;
+      }
+      .chat-input input {
+        padding: 8px 10px;
+        font-size: 13px;
+      }
+      .chat-input button {
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+      .chat-attach {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+      }
+    }
   </style>
 </head>
 <body>

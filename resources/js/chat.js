@@ -18,7 +18,7 @@ let isTyping = false;
 let pollTimer = null;
 let connectionTimeout = null;
 
-const POLL_INTERVAL_MS = 5000;
+const POLL_INTERVAL_MS = 1000;
 const CONNECTION_TIMEOUT_MS = 30000;
 
 function initializeDOMElements() {
@@ -337,6 +337,10 @@ function registerChannel() {
           fileMime: event.fileMime,
         }, 'admin');
         setTyping(false);
+      }
+      // For reliability when connection is flaky, refresh the history immediately
+      if (event.conversationId === conversationId || event.conversation_id === conversationId) {
+        loadHistory();
       }
     })
     .listen('typing.updated', (event) => {
