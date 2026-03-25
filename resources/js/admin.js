@@ -553,6 +553,9 @@ input.addEventListener('blur', async () => {
 fileInput.addEventListener('change', async () => {
   const file = fileInput.files?.[0];
   if (!file || !activeConversation) {
+    if (!activeConversation) {
+      alert('Please select a conversation before uploading a file');
+    }
     return;
   }
   const formData = new FormData();
@@ -565,10 +568,28 @@ fileInput.addEventListener('change', async () => {
     },
     body: formData,
   });
-  const data = await response.json();
-  if (!data.fileUrl) {
+
+  let data;
+  try {
+    data = await response.json();
+  } catch (err) {
+    console.error('Upload response parse error', err);
+    alert('Upload failed: invalid server response');
     return;
   }
+
+  if (!response.ok) {
+    console.error('Upload failed:', response.status, response.statusText, data);
+    alert('Upload failed: ' + (data?.error || response.statusText || 'Unknown error'));
+    return;
+  }
+
+  if (!data.fileUrl) {
+    console.error('Upload failed: missing fileUrl', data);
+    alert('Upload failed: Missing fileUrl in response');
+    return;
+  }
+
   const payload = {
     messageType: 'file',
     text: '',
